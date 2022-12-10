@@ -7,12 +7,12 @@ import 'package:google_nav_bar/google_nav_bar.dart';
 import '../utils/constants.dart';
 import '../views/home/home_screen.dart';
 
-class NavBar extends StatefulWidget {
+class BottomNavBar extends StatefulWidget {
   @override
-  _NavBarState createState() => _NavBarState();
+  _BottomNavBarState createState() => _BottomNavBarState();
 }
 
-class _NavBarState extends State<NavBar> {
+class _BottomNavBarState extends State<BottomNavBar> {
   int _selectedIndex = 0;
   static const TextStyle optionStyle =
       TextStyle(fontSize: 30, fontWeight: FontWeight.w600);

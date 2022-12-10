@@ -1,6 +1,11 @@
+import 'dart:developer';
+
 import 'package:amaze_rider/views/auth/create_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:pinput/pinput.dart';
+import 'package:provider/provider.dart';
+
+import '../../providers/auth_provider.dart';
 import '../../utils/constants.dart';
 import '../../widget/custom_button.dart';
 
@@ -11,6 +16,8 @@ class OtpVerifyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
     return Scaffold(
       body: SingleChildScrollView(
         child: SafeArea(
@@ -113,11 +120,15 @@ class OtpVerifyScreen extends StatelessWidget {
                 CustomButton(
                     buttonName: 'Verify',
                     onClick: () {
+                      log(authProvider.verificationId);
 
-                   /*   Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => CreateProfileScreen()));*/
+                      authProvider.verifyOtp(
+                          authProvider.verificationId, _pinController.text, () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => CreateProfileScreen()));
+                      });
                     })
               ],
             ),
@@ -132,6 +143,7 @@ class TextEditorForPhoneVerify extends StatelessWidget {
   final TextEditingController controller;
 
   TextEditorForPhoneVerify(this.controller);
+
   final focus = FocusNode();
 
   @override

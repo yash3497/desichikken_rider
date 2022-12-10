@@ -8,8 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter_switch/flutter_switch.dart';
+import 'package:provider/provider.dart';
 
-import '../../widget/custom_appbar.dart';
+import '../../providers/auth_provider.dart';
 import '../humburger_menus_screens/wallets_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -36,6 +37,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
     return Scaffold(
       key: _globalKey,
       drawer: MyDrawer(),
@@ -43,7 +46,8 @@ class _HomeScreenState extends State<HomeScreen> {
         centerTitle: false,
         backgroundColor: white,
         actions: [
-          Padding(
+          Container(
+            width: width(context) * 0.23,
             padding: const EdgeInsets.only(right: 8.0),
             child: InkWell(
               onTap: () {
@@ -57,13 +61,13 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.only(right: 8.0),
-            child: CircleAvatar(
-              radius: 18,
-              backgroundImage: AssetImage('assets/images/profile.png'),
-            ),
-          ),
+          // const Padding(
+          //   padding: EdgeInsets.only(right: 8.0),
+          //   child: CircleAvatar(
+          //     radius: 18,
+          //     backgroundImage: AssetImage('assets/images/profile.png'),
+          //   ),
+          // ),
         ],
         leading: IconButton(
             onPressed: () {
@@ -95,6 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onToggle: (val) {
               setState(() {
                 isToggle = val;
+                authProvider.createUserProfile({"isOnline": val});
               });
             },
             value: isToggle,

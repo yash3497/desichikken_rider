@@ -35,13 +35,13 @@ class _CustomAppbarState extends State<CustomAppbar> {
             ),
           ),
         ),
-        const Padding(
-          padding: EdgeInsets.only(right: 8.0),
-          child: CircleAvatar(
-            radius: 18,
-            backgroundImage: AssetImage('assets/images/profile.png'),
-          ),
-        ),
+        // const Padding(
+        //   padding: EdgeInsets.only(right: 8.0),
+        //   child: CircleAvatar(
+        //     radius: 18,
+        //     backgroundImage: AssetImage('assets/images/profile.png'),
+        //   ),
+        // ),
       ],
       leadingWidth: width(context) * 0.24,
       leading: FlutterSwitch(

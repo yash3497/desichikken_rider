@@ -1,16 +1,23 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/container.dart';
-import 'package:flutter/src/widgets/framework.dart';
+import 'dart:developer';
 
+import 'package:amaze_rider/providers/auth_provider.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../utils/constants.dart';
 import '../../widget/custom_button.dart';
 import 'otp_verify_screen.dart';
 
 class SignInScreen extends StatelessWidget {
-  const SignInScreen({super.key});
+  SignInScreen({super.key});
+
+
+  final TextEditingController controller = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
+
+    final authProvider = Provider.of<AuthProvider>(context);
+
     return Scaffold(
       body: SingleChildScrollView(
         child: SafeArea(
@@ -70,7 +77,8 @@ class SignInScreen extends StatelessWidget {
               SizedBox(
                 width: width(context) * 0.9,
                 child: TextField(
-                  // controller: controller,
+                  controller: controller,
+                  keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                       contentPadding: const EdgeInsets.only(top: 12, left: 20),
                       focusedBorder: OutlineInputBorder(
@@ -93,10 +101,16 @@ class SignInScreen extends StatelessWidget {
               CustomButton(
                   buttonName: 'Verify',
                   onClick: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => OtpVerifyScreen()));
+
+                    if(controller.text.trim().isNotEmpty&& controller.text.trim().length==10){
+                      authProvider.verifyMobile(controller.text.trim(), () {
+                        log("kk");
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => OtpVerifyScreen()));
+                      });
+                    }
                   }),
               addVerticalSpace(30),
               Row(

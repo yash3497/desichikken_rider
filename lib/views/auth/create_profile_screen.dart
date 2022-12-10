@@ -1,12 +1,18 @@
+import 'dart:io';
+
 import 'package:amaze_rider/utils/constants.dart';
-import 'package:amaze_rider/views/home/home_screen.dart';
 import 'package:amaze_rider/widget/custom_appbar.dart';
 import 'package:amaze_rider/widget/custom_button.dart';
 import 'package:amaze_rider/widget/custom_textfield.dart';
 import 'package:amaze_rider/widget/my_bottom_navbar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/container.dart';
-import 'package:flutter/src/widgets/framework.dart';
+import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+
+import '../../providers/auth_provider.dart';
 
 enum gender { none, male, female, others }
 
@@ -19,8 +25,18 @@ class CreateProfileScreen extends StatefulWidget {
 
 class _CreateProfileScreenState extends State<CreateProfileScreen> {
   gender selectedGender = gender.none;
+
+
+  TextEditingController nameController = TextEditingController();
+  TextEditingController surNameController = TextEditingController();
+  TextEditingController dobController = TextEditingController();
+  TextEditingController emailController = TextEditingController();
+  TextEditingController licenceController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
     return Scaffold(
       appBar: const PreferredSize(
           preferredSize: Size.fromHeight(60), child: CustomAppbar(title: '')),
@@ -47,15 +63,30 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                 style: bodyText14normal(color: black.withOpacity(0.5)),
               ),
               addVerticalSpace(40),
-              CustomTextField(hintText: 'Name'),
+              CustomTextField(
+                hintText: 'Name',
+                controller: nameController,
+              ),
               addVerticalSpace(20),
-              CustomTextField(hintText: 'Surname'),
+              CustomTextField(
+                hintText: 'Surname',
+                controller: surNameController,
+              ),
               addVerticalSpace(20),
-              CustomTextField(hintText: 'Date of Birth'),
+              CustomTextField(
+                hintText: 'Date of Birth',
+                controller: dobController,
+              ),
               addVerticalSpace(20),
-              CustomTextField(hintText: 'Email'),
+              CustomTextField(
+                hintText: 'Email',
+                controller: emailController,
+              ),
               addVerticalSpace(20),
-              CustomTextField(hintText: 'Driving license ID'),
+              CustomTextField(
+                hintText: 'Driving license ID',
+                controller: licenceController,
+              ),
               addVerticalSpace(30),
               Padding(
                 padding: EdgeInsets.only(right: width(context) * 0.5),
@@ -119,8 +150,24 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
               CustomButton(
                   buttonName: 'Save',
                   onClick: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => NavBar()));
+                    authProvider.getMsgToken();
+                    authProvider.createUserProfile({
+                      "Name": nameController.text.trim(),
+                      "Surname": surNameController.text.trim(),
+                      "DOB": dobController.text.trim(),
+                      "Email": emailController.text.trim(),
+                      "LicenseNumber": licenceController.text.trim(),
+                      "Number":
+                      FirebaseAuth.instance.currentUser?.phoneNumber ?? "",
+                      "Gender": selectedGender.toString(),
+                      "riderId": FirebaseAuth.instance.currentUser?.uid ?? "",
+                      "isOnline": true,
+                      "token": authProvider.msgToken,
+                      "ProfileImage": profileUrl,
+                    }).then((value) {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) => BottomNavBar()));
+                    });
                   }),
               addVerticalSpace(height(context) * 0.01),
             ],
@@ -129,4 +176,63 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
       ),
     );
   }
+
+
+  Future selectPhoto(BuildContext context, double d, int i) async {
+    return showModalBottomSheet(
+        context: context,
+        builder: (context) {
+          return BottomSheet(
+              onClosing: () {},
+              builder: (context) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.camera),
+                      title: const Text("Camera"),
+                      onTap: () async {
+                        Navigator.pop(context);
+
+                        getImage(ImageSource.camera);
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.album),
+                      title: const Text("Gallery"),
+                      onTap: () async {
+                        Navigator.pop(context);
+                        getImage(ImageSource.gallery);
+                      },
+                    )
+                  ],
+                );
+              });
+        });
+  }
+
+  Future getImage(ImageSource source) async {
+    try {
+      FirebaseStorage storage = FirebaseStorage.instance;
+      final XFile? image =
+      await ImagePicker().pickImage(source: source, imageQuality: 60);
+      setState(() {});
+
+      if (image == null) return;
+      Reference reference = storage
+          .ref()
+          .child("riders")
+          .child(FirebaseAuth.instance.currentUser!.uid);
+
+      UploadTask uploadTask = reference.putFile(File(image.path));
+      TaskSnapshot snapshot = await uploadTask;
+      profileUrl = await (snapshot).ref.getDownloadURL();
+      print(profileUrl);
+    } on PlatformException catch (e) {
+      print('Failed to pick image: $e');
+    }
+  }
+
+  String profileUrl = '';
+  final ImagePicker picker = ImagePicker();
 }
