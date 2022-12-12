@@ -1,3 +1,4 @@
+import 'package:amaze_rider/providers/service_procider.dart';
 import 'package:amaze_rider/utils/constants.dart';
 import 'package:amaze_rider/views/home/rejected_screen.dart';
 import 'package:amaze_rider/views/home/search_screen.dart';
@@ -35,13 +36,23 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isChange = false;
   bool isToggle = true;
 
+  late ServiceProvider _serviceProvider;
+
+  @override
+  void initState() {
+    _serviceProvider = Provider.of(context, listen: false);
+    _serviceProvider.fetchNewOrder();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
+    _serviceProvider = Provider.of(context);
 
     return Scaffold(
       key: _globalKey,
-      drawer: MyDrawer(),
+      drawer: const MyDrawer(),
       appBar: AppBar(
         centerTitle: false,
         backgroundColor: white,
@@ -222,7 +233,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           : myFillBoxDecoration(0, Colors.grey.shade200, 30),
                       child: Center(
                         child: Text(
-                          'New orders(2)',
+                          'New orders (${_serviceProvider.newOrderList.length})',
                           style: bodyText13normal(
                               color: !isChange ? white : black),
                         ),
@@ -246,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           : myFillBoxDecoration(0, Colors.grey.shade200, 30),
                       child: Center(
                         child: Text(
-                          'Delivered',
+                          'Delivered (${_serviceProvider.deliveredOrderList.length})',
                           style:
                               bodyText13normal(color: isChange ? white : black),
                         ),
@@ -256,377 +267,357 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               addVerticalSpace(20),
-              !isChange ? NewOrderListWidget() : DeliveredOrdersWidget()
+              !isChange ? Expanded(
+                  child: ListView.builder(
+                      itemCount: _serviceProvider.newOrderList.length,
+                      itemBuilder: (context, i) {
+                        return Container(
+                          margin: EdgeInsets.all(10),
+                          padding: EdgeInsets.all(10),
+                          height: height(context) * 0.35,
+                          width: width(context) * 0.95,
+                          decoration: shadowDecoration(6, 6),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (ctx) => NewOrderDetails()));
+                                },
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          'ID: 35473473737783',
+                                          style: bodyText14normal(color: black),
+                                        ),
+                                        addHorizontalySpace(5),
+                                        Container(
+                                          height: 15,
+                                          width: width(context) * 0.1,
+                                          decoration:
+                                          myOutlineBoxDecoration(1, primary, 1),
+                                          child: Center(
+                                            child: Text(
+                                              'PAID',
+                                              style: bodytext12Bold(color: primary),
+                                            ),
+                                          ),
+                                        ),
+                                        Spacer(),
+                                        Text(
+                                          '5 min ago',
+                                          style: bodyText14w600(color: black),
+                                        )
+                                      ],
+                                    ),
+                                    addVerticalSpace(10),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          '2 Items',
+                                          style: bodyText14w600(color: black),
+                                        ),
+                                        Spacer(),
+                                        Image.asset('assets/images/way.png'),
+                                        Text(
+                                          '8.6 KM',
+                                          style: bodyText14w600(color: black),
+                                        ),
+                                        Spacer(),
+                                        Text(
+                                          'Rs.126',
+                                          style: bodyText14w600(color: black),
+                                        ),
+                                      ],
+                                    ),
+                                    const Divider(
+                                      thickness: 1,
+                                    ),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.houseboat_outlined,
+                                          color: primary,
+                                          size: 35,
+                                        ),
+                                        addHorizontalySpace(8),
+                                        Column(
+                                          children: [
+                                            Text(
+                                              'Supermarket',
+                                              style: bodyText16w600(color: primary),
+                                            ),
+                                            Text(
+                                              'Pick up Location',
+                                              style: bodyText14normal(
+                                                  color: black.withOpacity(0.4)),
+                                            ),
+                                          ],
+                                        )
+                                      ],
+                                    ),
+                                    Container(
+                                      margin:
+                                      EdgeInsets.only(left: width(context) * 0.05),
+                                      height: height(context) * 0.07,
+                                      width: 1,
+                                      color: black,
+                                    ),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.home_filled,
+                                          color: black,
+                                          size: 35,
+                                        ),
+                                        addHorizontalySpace(8),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Sector 14, Karnal Haryana 132001',
+                                              style: bodyText14w600(color: black),
+                                            ),
+                                            Text(
+                                              'Delivery location',
+                                              style: bodyText14normal(
+                                                  color: black.withOpacity(0.4)),
+                                            ),
+                                          ],
+                                        )
+                                      ],
+                                    ),
+                                    addVerticalSpace(height(context) * 0.04),
+                                  ],
+                                ),
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  Container(
+                                    height: height(context) * 0.05,
+                                    width: width(context) * 0.3,
+                                    decoration: myOutlineBoxDecoration(1, primary, 6),
+                                    child: Center(
+                                      child: Text(
+                                        'Reject',
+                                        style: bodyText14w600(color: primary),
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    height: height(context) * 0.05,
+                                    width: width(context) * 0.53,
+                                    decoration: myFillBoxDecoration(
+                                        0, Color.fromRGBO(47, 168, 78, 1), 6),
+                                    child: Center(
+                                      child: Text(
+                                        'Pick Order',
+                                        style: bodyText14w600(color: white),
+                                      ),
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      })) : Expanded(
+                  child: ListView.builder(
+                      itemCount: _serviceProvider.deliveredOrderList.length,
+                      itemBuilder: (ctx, i) {
+                        return Container(
+                          margin: EdgeInsets.all(10),
+                          padding: EdgeInsets.all(10),
+                          height: height(context) * 0.41,
+                          width: width(context) * 0.95,
+                          decoration: shadowDecoration(6, 6),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Kinjal Parmar',
+                                style: bodyText14w600(color: black),
+                              ),
+                              addVerticalSpace(7),
+                              Row(
+                                children: [
+                                  Text(
+                                    'Order ID- 998070',
+                                    style: bodyText14normal(color: black),
+                                  ),
+                                  addHorizontalySpace(5),
+                                  Container(
+                                    height: 15,
+                                    width: width(context) * 0.1,
+                                    decoration: myOutlineBoxDecoration(1, primary, 1),
+                                    child: Center(
+                                      child: Text(
+                                        'PAID',
+                                        style: bodytext12Bold(color: primary),
+                                      ),
+                                    ),
+                                  ),
+                                  Spacer(),
+                                  Text(
+                                    '25 min',
+                                    style: bodyText14w600(color: black),
+                                  )
+                                ],
+                              ),
+                              addVerticalSpace(10),
+                              Row(
+                                children: [
+                                  Text(
+                                    '2 Item(s) Order ',
+                                    style: bodyText14w600(color: black.withOpacity(0.3)),
+                                  ),
+                                  Spacer(),
+                                  Image.asset('assets/images/way.png'),
+                                  Text(
+                                    ' 8.6 KM',
+                                    style: bodyText14w600(color: black),
+                                  ),
+                                  Spacer(),
+                                  Text(
+                                    'Rs.126',
+                                    style: bodyText14w600(color: black),
+                                  ),
+                                ],
+                              ),
+                              const Divider(
+                                thickness: 1,
+                              ),
+                              Container(
+                                padding: EdgeInsets.all(6),
+                                height: height(context) * 0.15,
+                                width: width(context) * 0.92,
+                                decoration:
+                                myOutlineBoxDecoration(1, black.withOpacity(0.3), 8),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.houseboat_outlined,
+                                          color: primary,
+                                          size: 35,
+                                        ),
+                                        addHorizontalySpace(8),
+                                        Column(
+                                          children: [
+                                            Text(
+                                              'Supermarket',
+                                              style: bodyText16w600(color: primary),
+                                            ),
+                                            Text(
+                                              'Pick up Location',
+                                              style: bodyText14normal(
+                                                  color: black.withOpacity(0.4)),
+                                            ),
+                                          ],
+                                        ),
+                                        Spacer(),
+                                        Text(
+                                          '08:00PM',
+                                          style: bodyText14w600(color: black),
+                                        )
+                                      ],
+                                    ),
+                                    const Divider(
+                                      thickness: 1,
+                                    ),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.home_filled,
+                                          color: black,
+                                          size: 35,
+                                        ),
+                                        addHorizontalySpace(8),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Sector 14, Karnal Haryana 132001',
+                                              style: bodyText13normal(color: black),
+                                            ),
+                                            Text(
+                                              'Delivery location',
+                                              style: bodyText14normal(
+                                                  color: black.withOpacity(0.4)),
+                                            ),
+                                          ],
+                                        ),
+                                        Spacer(),
+                                        Text(
+                                          '08:25PM',
+                                          style: bodyText14w600(color: black),
+                                        )
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              addVerticalSpace(6),
+                              Expanded(
+                                  child: ListView.builder(
+                                      physics: NeverScrollableScrollPhysics(),
+                                      itemCount: 2,
+                                      itemBuilder: (context, i) {
+                                        return Column(
+                                          children: [
+                                            Row(
+                                              children: [
+                                                SizedBox(
+                                                  height: height(context) * 0.06,
+                                                  width: width(context) * 0.2,
+                                                  child: Image.asset(
+                                                    'assets/images/meat.png',
+                                                    fit: BoxFit.fill,
+                                                  ),
+                                                ),
+                                                addHorizontalySpace(5),
+                                                Column(
+                                                  crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      'Polutry Chicken (1)',
+                                                      style: bodytext12Bold(color: black),
+                                                    ),
+                                                    addVerticalSpace(5),
+                                                    Text(
+                                                      '900gms I Net: 450gms',
+                                                      style: bodyText11Small(
+                                                          color: black.withOpacity(0.3)),
+                                                    )
+                                                  ],
+                                                )
+                                              ],
+                                            ),
+                                            const Divider(
+                                              height: 5,
+                                              thickness: 1,
+                                            )
+                                          ],
+                                        );
+                                      }))
+                            ],
+                          ),
+                        );
+                      }))
             ])
           : OfflineScreen(),
     );
   }
 }
 
-class DeliveredOrdersWidget extends StatelessWidget {
-  const DeliveredOrdersWidget({
-    Key? key,
-  }) : super(key: key);
 
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-        child: ListView.builder(
-            itemCount: 5,
-            itemBuilder: (ctx, i) {
-              return Container(
-                margin: EdgeInsets.all(10),
-                padding: EdgeInsets.all(10),
-                height: height(context) * 0.41,
-                width: width(context) * 0.95,
-                decoration: shadowDecoration(6, 6),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Kinjal Parmar',
-                      style: bodyText14w600(color: black),
-                    ),
-                    addVerticalSpace(7),
-                    Row(
-                      children: [
-                        Text(
-                          'Order ID- 998070',
-                          style: bodyText14normal(color: black),
-                        ),
-                        addHorizontalySpace(5),
-                        Container(
-                          height: 15,
-                          width: width(context) * 0.1,
-                          decoration: myOutlineBoxDecoration(1, primary, 1),
-                          child: Center(
-                            child: Text(
-                              'PAID',
-                              style: bodytext12Bold(color: primary),
-                            ),
-                          ),
-                        ),
-                        Spacer(),
-                        Text(
-                          '25 min',
-                          style: bodyText14w600(color: black),
-                        )
-                      ],
-                    ),
-                    addVerticalSpace(10),
-                    Row(
-                      children: [
-                        Text(
-                          '2 Item(s) Order ',
-                          style: bodyText14w600(color: black.withOpacity(0.3)),
-                        ),
-                        Spacer(),
-                        Image.asset('assets/images/way.png'),
-                        Text(
-                          ' 8.6 KM',
-                          style: bodyText14w600(color: black),
-                        ),
-                        Spacer(),
-                        Text(
-                          'Rs.126',
-                          style: bodyText14w600(color: black),
-                        ),
-                      ],
-                    ),
-                    const Divider(
-                      thickness: 1,
-                    ),
-                    Container(
-                      padding: EdgeInsets.all(6),
-                      height: height(context) * 0.15,
-                      width: width(context) * 0.92,
-                      decoration:
-                          myOutlineBoxDecoration(1, black.withOpacity(0.3), 8),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.houseboat_outlined,
-                                color: primary,
-                                size: 35,
-                              ),
-                              addHorizontalySpace(8),
-                              Column(
-                                children: [
-                                  Text(
-                                    'Supermarket',
-                                    style: bodyText16w600(color: primary),
-                                  ),
-                                  Text(
-                                    'Pick up Location',
-                                    style: bodyText14normal(
-                                        color: black.withOpacity(0.4)),
-                                  ),
-                                ],
-                              ),
-                              Spacer(),
-                              Text(
-                                '08:00PM',
-                                style: bodyText14w600(color: black),
-                              )
-                            ],
-                          ),
-                          const Divider(
-                            thickness: 1,
-                          ),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.home_filled,
-                                color: black,
-                                size: 35,
-                              ),
-                              addHorizontalySpace(8),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Sector 14, Karnal Haryana 132001',
-                                    style: bodyText13normal(color: black),
-                                  ),
-                                  Text(
-                                    'Delivery location',
-                                    style: bodyText14normal(
-                                        color: black.withOpacity(0.4)),
-                                  ),
-                                ],
-                              ),
-                              Spacer(),
-                              Text(
-                                '08:25PM',
-                                style: bodyText14w600(color: black),
-                              )
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    addVerticalSpace(6),
-                    Expanded(
-                        child: ListView.builder(
-                            physics: NeverScrollableScrollPhysics(),
-                            itemCount: 2,
-                            itemBuilder: (context, i) {
-                              return Column(
-                                children: [
-                                  Row(
-                                    children: [
-                                      SizedBox(
-                                        height: height(context) * 0.06,
-                                        width: width(context) * 0.2,
-                                        child: Image.asset(
-                                          'assets/images/meat.png',
-                                          fit: BoxFit.fill,
-                                        ),
-                                      ),
-                                      addHorizontalySpace(5),
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Polutry Chicken (1)',
-                                            style: bodytext12Bold(color: black),
-                                          ),
-                                          addVerticalSpace(5),
-                                          Text(
-                                            '900gms I Net: 450gms',
-                                            style: bodyText11Small(
-                                                color: black.withOpacity(0.3)),
-                                          )
-                                        ],
-                                      )
-                                    ],
-                                  ),
-                                  const Divider(
-                                    height: 5,
-                                    thickness: 1,
-                                  )
-                                ],
-                              );
-                            }))
-                  ],
-                ),
-              );
-            }));
-  }
-}
-
-class NewOrderListWidget extends StatelessWidget {
-  const NewOrderListWidget({
-    Key? key,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-        child: ListView.builder(
-            itemCount: 6,
-            itemBuilder: (context, i) {
-              return Container(
-                margin: EdgeInsets.all(10),
-                padding: EdgeInsets.all(10),
-                height: height(context) * 0.35,
-                width: width(context) * 0.95,
-                decoration: shadowDecoration(6, 6),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    InkWell(
-                      onTap: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (ctx) => NewOrderDetails()));
-                      },
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                'ID: 35473473737783',
-                                style: bodyText14normal(color: black),
-                              ),
-                              addHorizontalySpace(5),
-                              Container(
-                                height: 15,
-                                width: width(context) * 0.1,
-                                decoration:
-                                    myOutlineBoxDecoration(1, primary, 1),
-                                child: Center(
-                                  child: Text(
-                                    'PAID',
-                                    style: bodytext12Bold(color: primary),
-                                  ),
-                                ),
-                              ),
-                              Spacer(),
-                              Text(
-                                '5 min ago',
-                                style: bodyText14w600(color: black),
-                              )
-                            ],
-                          ),
-                          addVerticalSpace(10),
-                          Row(
-                            children: [
-                              Text(
-                                '2 Items',
-                                style: bodyText14w600(color: black),
-                              ),
-                              Spacer(),
-                              Image.asset('assets/images/way.png'),
-                              Text(
-                                '8.6 KM',
-                                style: bodyText14w600(color: black),
-                              ),
-                              Spacer(),
-                              Text(
-                                'Rs.126',
-                                style: bodyText14w600(color: black),
-                              ),
-                            ],
-                          ),
-                          const Divider(
-                            thickness: 1,
-                          ),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.houseboat_outlined,
-                                color: primary,
-                                size: 35,
-                              ),
-                              addHorizontalySpace(8),
-                              Column(
-                                children: [
-                                  Text(
-                                    'Supermarket',
-                                    style: bodyText16w600(color: primary),
-                                  ),
-                                  Text(
-                                    'Pick up Location',
-                                    style: bodyText14normal(
-                                        color: black.withOpacity(0.4)),
-                                  ),
-                                ],
-                              )
-                            ],
-                          ),
-                          Container(
-                            margin:
-                                EdgeInsets.only(left: width(context) * 0.05),
-                            height: height(context) * 0.07,
-                            width: 1,
-                            color: black,
-                          ),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.home_filled,
-                                color: black,
-                                size: 35,
-                              ),
-                              addHorizontalySpace(8),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Sector 14, Karnal Haryana 132001',
-                                    style: bodyText14w600(color: black),
-                                  ),
-                                  Text(
-                                    'Delivery location',
-                                    style: bodyText14normal(
-                                        color: black.withOpacity(0.4)),
-                                  ),
-                                ],
-                              )
-                            ],
-                          ),
-                          addVerticalSpace(height(context) * 0.04),
-                        ],
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Container(
-                          height: height(context) * 0.05,
-                          width: width(context) * 0.3,
-                          decoration: myOutlineBoxDecoration(1, primary, 6),
-                          child: Center(
-                            child: Text(
-                              'Reject',
-                              style: bodyText14w600(color: primary),
-                            ),
-                          ),
-                        ),
-                        Container(
-                          height: height(context) * 0.05,
-                          width: width(context) * 0.53,
-                          decoration: myFillBoxDecoration(
-                              0, Color.fromRGBO(47, 168, 78, 1), 6),
-                          child: Center(
-                            child: Text(
-                              'Pick Order',
-                              style: bodyText14w600(color: white),
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            }));
-  }
-}
