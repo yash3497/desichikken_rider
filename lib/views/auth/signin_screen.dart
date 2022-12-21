@@ -108,7 +108,7 @@ class SignInScreen extends StatelessWidget {
                         Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => OtpVerifyScreen()));
+                                builder: (context) => OtpVerifyScreen(number:controller.text,)));
                       });
                     }
                   }),

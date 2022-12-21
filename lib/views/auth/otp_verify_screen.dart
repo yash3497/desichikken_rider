@@ -10,7 +10,8 @@ import '../../utils/constants.dart';
 import '../../widget/custom_button.dart';
 
 class OtpVerifyScreen extends StatelessWidget {
-  OtpVerifyScreen({super.key});
+  final String number;
+  OtpVerifyScreen({super.key, required this.number});
 
   final TextEditingController _pinController = TextEditingController();
 
@@ -82,7 +83,7 @@ class OtpVerifyScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      '+91 95425 78945',
+                      number,
                       style: bodyText16w600(color: black),
                     ),
                     addHorizontalySpace(10),
@@ -124,11 +125,11 @@ class OtpVerifyScreen extends StatelessWidget {
 
                       authProvider.verifyOtp(
                           authProvider.verificationId, _pinController.text, () {
-                        Navigator.push(
+                        Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
                                 builder: (context) => CreateProfileScreen()));
-                      });
+                      },context);
                     })
               ],
             ),

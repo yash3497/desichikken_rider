@@ -1,9 +1,13 @@
 import 'dart:developer';
 
+import 'package:amaze_rider/views/home/waiting.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+
+import '../views/auth/create_profile_screen.dart';
+import '../widget/my_bottom_navbar.dart';
 
 class AuthProvider extends ChangeNotifier {
   final FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
@@ -49,14 +53,31 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> verifyOtp(
-      verificationId, smsCode, VoidCallback onVerifyOtp) async {
+      verificationId, smsCode, VoidCallback onVerifyOtp,context) async {
     // Create a PhoneAuthCredential with the code
     PhoneAuthCredential credential = PhoneAuthProvider.credential(
         verificationId: verificationId, smsCode: smsCode);
 
     // Sign the user in (or link) with the credential
-    await _auth.signInWithCredential(credential).then((value) {
+    await _auth.signInWithCredential(credential).then((value) async {
       onVerifyOtp();
+      var d = await _firebaseFirestore
+          .collection("Riders")
+          .doc(_auth.currentUser!.uid).get();
+      if(d.exists){
+        if(d['verified'] == true) {
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => BottomNavBar()));
+        }else{
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => WaitingScreen()));
+        }
+      }else{
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => CreateProfileScreen()));
+      }
     });
 
     notifyListeners();
@@ -68,6 +89,7 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> getMsgToken() async {
     _token = await FirebaseMessaging.instance.getToken();
+    FirebaseFirestore.instance.collection("Riders").doc(FirebaseAuth.instance.currentUser!.uid).update({'token':_token});
     notifyListeners();
   }
 

@@ -1,7 +1,9 @@
 import 'dart:developer';
 
+import 'package:amaze_rider/providers/service_procider.dart';
 import 'package:amaze_rider/utils/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class OfflineScreen extends StatefulWidget {
   @override
@@ -31,7 +33,10 @@ class _OfflineScreenState extends State<OfflineScreen> {
             ),
             addVerticalSpace(15),
             InkWell(
-              onTap: () {},
+              onTap: () {
+                ServiceProvider sp = Provider.of(context,listen: false);
+                sp.riderStatusUpdate();
+              },
               child: Container(
                 height: height(context) * 0.045,
                 width: width(context) * 0.5,

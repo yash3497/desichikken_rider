@@ -1,6 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 import '../../utils/constants.dart';
 import '../../widget/custom_appbar.dart';
@@ -15,12 +18,12 @@ class WithdrawalScreen extends StatefulWidget {
 
 class _WithdrawalScreenState extends State<WithdrawalScreen> {
   List lookingForList = [
-    'Rs 50',
-    'Rs 100',
-    'Rs 300',
-    'Rs 500',
-    'Rs 750',
-    'Rs 1000',
+    '50',
+    '100',
+    '300',
+    '500',
+    '750',
+    '1000',
   ];
 
   List<bool> listBool = [
@@ -34,9 +37,12 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
     false,
     false,
   ];
+  String amount = '0';
 
   int select = 0;
+
   bool isTrue = false;
+  TextEditingController a = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -69,10 +75,16 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                         child: Center(
                           child: TextField(
                             keyboardType: TextInputType.number,
+                            onChanged: (v){
+                              amount = v;
+                              setState(() {
+
+                              });
+                            },
                             textAlign: TextAlign.center,
                             decoration: InputDecoration(
                                 border: InputBorder.none,
-                                hintText: lookingForList[select],
+                                hintText: "Rs $amount",
                                 hintStyle: bodyText20w700(color: black)),
                           ),
                         ),
@@ -85,9 +97,11 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                             return GestureDetector(
                                 onTap: () {
                                   setState(() {
+                                    a.clear();
                                     listBool[index] = !listBool[select];
                                     isTrue = !isTrue;
                                     select = index;
+                                    amount = lookingForList[index];
                                   });
                                 },
                                 child: Container(
@@ -106,7 +120,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                                     width: width(context) * 0.19,
                                     child: Center(
                                       child: Text(
-                                        lookingForList[index],
+                                       "Rs "+ lookingForList[index],
                                         textAlign: TextAlign.center,
                                         style: bodyText14w600(
                                             color: select == index
@@ -122,11 +136,52 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                       ),
                       CustomButton(
                           buttonName: 'Continue',
-                          onClick: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => SelectBankAccount()));
+                          onClick: () async{
+                            print(amount);
+                            var riderD = await FirebaseFirestore.instance.collection("Riders").doc(FirebaseAuth.instance.currentUser!.uid).get();
+                            double wall = riderD.data()!['wallet'] ?? 0.0;
+                            if(double.parse(amount)<= wall) {
+                              showDialog(context: context, builder: (_) {
+                                return AlertDialog(
+                                  title: Text(
+                                      "Are you sure want to withdraw $amount ?"),
+                                  actions: [
+                                    TextButton(onPressed: () {
+                                      Navigator.pop(_);
+                                    }, child: const Text("cancel")),
+                                    TextButton(onPressed: () {
+                                      var a = FirebaseFirestore.instance
+                                          .collection("WithdrawRequest").doc();
+                                      a.set({
+                                        "date": DateTime.now(),
+                                        "riderId": FirebaseAuth.instance
+                                            .currentUser!.uid,
+                                        "amount": double.parse(amount),
+                                        "paymentId": a.id,
+                                        "paid": false,
+                                      });
+                                      FirebaseFirestore.instance.collection(
+                                          "Riders").doc(
+                                          FirebaseAuth.instance.currentUser!
+                                              .uid).update({
+                                        "wallet": FieldValue.increment(
+                                            -(double.parse(amount)))
+                                      });
+                                      Fluttertoast.showToast(
+                                          msg: "Withdraw requested Successfully");
+                                      Navigator.pop(_);
+                                      Navigator.pop(context);
+                                    }, child: const Text("yes"))
+                                  ],
+                                );
+                              });
+                            }else{
+                              Fluttertoast.showToast(msg: "Not enough balance");
+                            }
+                            // Navigator.push(
+                            //     context,
+                            //     MaterialPageRoute(
+                            //         builder: (context) => SelectBankAccount()));
                           })
                     ],
                   ),

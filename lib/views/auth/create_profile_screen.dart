@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:amaze_rider/utils/constants.dart';
+import 'package:amaze_rider/views/home/waiting.dart';
 import 'package:amaze_rider/widget/custom_appbar.dart';
 import 'package:amaze_rider/widget/custom_button.dart';
 import 'package:amaze_rider/widget/custom_textfield.dart';
@@ -32,6 +33,17 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
   TextEditingController dobController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController licenceController = TextEditingController();
+  File? image;
+  bool load = false;
+  void pickImage(ImageSource ims)async{
+    ImagePicker picker = ImagePicker();
+    picker.pickImage(source: ims).then((value) {
+      if(value == null) return;
+      setState((){
+        image = File(value.path);
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,13 +59,49 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
             children: [
               addVerticalSpace(20),
               Center(
-                child: CircleAvatar(
-                  radius: 35,
-                  backgroundColor: primary,
-                  child: Icon(
-                    Icons.person_rounded,
-                    color: white,
-                    size: 30,
+                child: InkWell(
+                  onTap: (){
+                    showModalBottomSheet(
+                        context: context,
+                        builder: (context){
+                          return Container(
+                            height: 150,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                ListTile(
+                                  title: Text("Camera"),
+                                  leading: Icon(Icons.camera),
+                                  onTap: (){
+                                    Navigator.pop(context);
+                                    pickImage(ImageSource.camera);
+                                  },
+                                ),
+                                ListTile(
+                                  title: const Text("Gallery"),
+                                  leading: Icon(Icons.image ),
+                                  onTap: (){
+                                    Navigator.pop(context);
+                                    pickImage(ImageSource.gallery);
+                                  },
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                    );
+                  },
+                  child:image!=null?CircleAvatar(
+                    radius: 35,
+                    backgroundImage: FileImage(image!),
+                  ): CircleAvatar(
+                    radius: 35,
+                    backgroundColor: primary,
+                    child: Icon(
+                      Icons.person_rounded,
+                      color: white,
+                      size: 30,
+                    ),
                   ),
                 ),
               ),
@@ -147,10 +195,29 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                 ],
               ),
               addVerticalSpace(height(context) * 0.05),
-              CustomButton(
+           !load ?  CustomButton(
                   buttonName: 'Save',
-                  onClick: () {
-                    authProvider.getMsgToken();
+                  onClick: () async {
+                    setState(() {
+                      load = true;
+                    });
+                    // authProvider.getMsgToken();
+                    String imaUrl = "";
+                    if(image != null) {
+                      FirebaseStorage storage = FirebaseStorage.instance;
+                      Reference ref =
+                      storage.ref().child("riders/${DateTime.now().toString()}");
+
+                      UploadTask uploadTask = ref.putFile(image!);
+                      setState(() {
+                      });
+                      await uploadTask.whenComplete(() async {
+                        var url = await ref.getDownloadURL();
+                        imaUrl = url;
+
+                      }).catchError((onError) {
+                      });
+                    }
                     authProvider.createUserProfile({
                       "Name": nameController.text.trim(),
                       "Surname": surNameController.text.trim(),
@@ -163,12 +230,24 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                       "riderId": FirebaseAuth.instance.currentUser?.uid ?? "",
                       "isOnline": true,
                       "token": authProvider.msgToken,
-                      "ProfileImage": profileUrl,
+                      "ProfileImage": imaUrl,
+                      'inTravel':false,
+                      'verified':false,
+                      'rejectedOrder':[],
+                      "completedOrder":[],
                     }).then((value) {
+                      setState(() {
+                        load = false;
+                      });
                       Navigator.push(context,
-                          MaterialPageRoute(builder: (context) => BottomNavBar()));
+                          MaterialPageRoute(builder: (context) =>const WaitingScreen()));
                     });
-                  }),
+                  }):Row(
+             mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(),
+                    ],
+                  ),
               addVerticalSpace(height(context) * 0.01),
             ],
           ),

@@ -1,5 +1,7 @@
 import 'package:amaze_rider/model/notifications_model.dart';
 import 'package:amaze_rider/utils/constants.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
@@ -26,7 +28,13 @@ class NotificationScreen extends StatelessWidget {
                 ),
                 Spacer(),
                 InkWell(
-                  onTap: () {},
+                  onTap: () {
+                    FirebaseFirestore.instance.collection("Riders").doc(FirebaseAuth.instance.currentUser!.uid).collection("notifications").where("read",isEqualTo: false).get().then((value) {
+                      for (var docs in value.docs){
+                        docs.reference.update({"read":true});
+                      }
+                    });
+                  },
                   child: Text(
                     'Mark all as read',
                     style: bodyText14w600(color: primary),
@@ -36,36 +44,50 @@ class NotificationScreen extends StatelessWidget {
             ),
           ),
           Expanded(
-              child: ListView.builder(
-                  itemCount: notificationList.length,
-                  itemBuilder: (ctx, i) {
-                    return Column(
-                      children: [
-                        ListTile(
-                          leading: CircleAvatar(
-                            radius: 25,
-                            backgroundColor: primary,
-                            child: Icon(
-                              Icons.person,
-                              color: white,
-                              size: 30,
+              child: StreamBuilder(
+                stream: FirebaseFirestore.instance.collection("Riders").doc(FirebaseAuth.instance.currentUser!.uid).collection("notifications").snapshots(),
+                builder: (context,AsyncSnapshot snapshot) {
+                  if(!snapshot.hasData){
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  return ListView.builder(
+                      itemCount: snapshot.data.docs.length,
+                      itemBuilder: (ctx, i) {
+                        var n = snapshot.data.docs[i];
+                        return Column(
+                          children: [
+                            ListTile(
+                              onTap:(){
+                                FirebaseFirestore.instance.collection("Riders").doc(FirebaseAuth.instance.currentUser!.uid).collection("notifications").doc(n.id).update({
+                                  "read":true
+                                });
+                              },
+                              leading: CircleAvatar(
+                                radius: 25,
+                                backgroundColor: primary,
+                                child: Icon(
+                                  Icons.person,
+                                  color: white,
+                                  size: 30,
+                                ),
+                              ),
+                              title: Text(
+                                n['msg'],
+                                style: bodyText14w600(
+                                    color: !n['read'] ? primary : black),
+                              ),
+                              subtitle: Text(
+                                n['time'].toDate().toString().split(" ").first,
+                              ),
                             ),
-                          ),
-                          title: Text(
-                            notificationList[i]['title'],
-                            style: bodyText14w600(
-                                color: i == 0 || i == 1 ? primary : black),
-                          ),
-                          subtitle: Text(
-                            notificationList[i]['subTitle'],
-                          ),
-                        ),
-                        const Divider(
-                          thickness: 1,
-                        )
-                      ],
-                    );
-                  }))
+                            const Divider(
+                              thickness: 1,
+                            )
+                          ],
+                        );
+                      });
+                }
+              ))
         ],
       ),
     );

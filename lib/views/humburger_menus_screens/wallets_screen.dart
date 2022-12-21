@@ -1,4 +1,6 @@
 import 'package:amaze_rider/views/humburger_menus_screens/withdraw_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
@@ -59,43 +61,48 @@ class WalletScreen extends StatelessWidget {
                           color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.w500)),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Rs 5,000',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 34,
-                              fontWeight: FontWeight.w700)),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => WithdrawalScreen()));
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25),
+                  StreamBuilder(
+                      stream: FirebaseFirestore.instance.collection("Riders").doc(FirebaseAuth.instance.currentUser!.uid).snapshots(),
+                      builder: (context,AsyncSnapshot snapshot) {
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                           Text('Rs.${snapshot.data.data()['wallet']??0}',
+                              style:const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 34,
+                                  fontWeight: FontWeight.w700)),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => WithdrawalScreen()));
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25),
+                              ),
+                              elevation: 15.0,
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.wallet,
+                                  color: black,
+                                ),
+                                const SizedBox(
+                                  width: 5,
+                                ),
+                                Text('Withdraw',
+                                    style: bodytext12Bold(color: black)),
+                              ],
+                            ),
                           ),
-                          elevation: 15.0,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.wallet,
-                              color: black,
-                            ),
-                            const SizedBox(
-                              width: 5,
-                            ),
-                            Text('Withdraw',
-                                style: bodytext12Bold(color: black)),
-                          ],
-                        ),
-                      ),
-                    ],
+                        ],
+                      );
+                    }
                   )
                 ],
               ),
@@ -127,93 +134,114 @@ class WalletScreen extends StatelessWidget {
             ),
             SizedBox(
               height: height(context) * 0.7,
-              child: ListView.builder(
-                  physics: BouncingScrollPhysics(),
-                  itemCount: orderStatus.length,
-                  itemBuilder: (ctx, i) {
-                    return Container(
-                      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      height: height(context) * 0.18,
-                      width: width(context) * 0.93,
-                      padding: EdgeInsets.all(10),
-                      decoration: shadowDecoration(10, 6),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: StreamBuilder(
+                stream: FirebaseFirestore.instance.collection("riderPayments").where("riderId",isEqualTo: FirebaseAuth.instance.currentUser!.uid).snapshots(),
+                builder: (context,AsyncSnapshot snapshot) {
+                  if(!snapshot.hasData){
+                    return Center(child: CircularProgressIndicator());
+                  }
+                  return ListView.builder(
+                      physics: BouncingScrollPhysics(),
+                      itemCount: snapshot.data.docs.length,
+                      itemBuilder: (ctx, i) {
+                        var a = snapshot.data.docs[i];
+                        return Container(
+                          margin: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          height: height(context) * 0.21,
+                          width: width(context) * 0.93,
+                          padding: EdgeInsets.all(10),
+                          decoration: shadowDecoration(10, 6),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Kinjal Parmar',
-                                style: bodyText14w600(color: black),
-                              ),
-                              Container(
-                                height: 30,
-                                width: width(context) * 0.28,
-                                decoration: myFillBoxDecoration(
-                                    0, orderStatus[i]['color'], 7),
-                                child: Center(
-                                  child: Text(
-                                    orderStatus[i]['status'],
-                                    style: bodytext12Bold(color: white),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    a['name'],
+                                    style: bodyText14w600(color: black),
                                   ),
-                                ),
-                              )
-                            ],
-                          ),
-                          addVerticalSpace(5),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Order ID- 998070',
-                                style: bodyText14normal(color: black),
+                                  Container(
+                                    height: 30,
+                                    width: width(context) * 0.28,
+                                    decoration: myFillBoxDecoration(
+                                        0,a['status'] == 'pending' ?Colors.orange:Colors.green, 7),
+                                    child: Center(
+                                      child: Text(
+                                        a['status'],
+                                        style: bodytext12Bold(color: white),
+                                      ),
+                                    ),
+                                  )
+                                ],
                               ),
-                              Text(
-                                'Yesterday, 09:00PM',
-                                style: bodytext12Bold(color: black),
-                              )
-                            ],
-                          ),
-                          addVerticalSpace(8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Poultry chicken (1), Frozen chicken(1)',
-                                style: bodyText14w600(
-                                    color: black.withOpacity(0.4)),
+                              addVerticalSpace(5),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Order ID- ${a['orderId']}',
+                                    style: bodyText14normal(color: black),
+                                  ),
+                                  Text(
+                                    a['updated'].toDate().toString().split(" ").first,
+                                    style: bodytext12Bold(color: black),
+                                  )
+                                ],
                               ),
-                              Text(
-                                'Rs. 400',
-                                style: bodyText14w600(color: primary),
-                              )
-                            ],
-                          ),
-                          addVerticalSpace(8),
-                          const Divider(
-                            thickness: 1,
-                          ),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.home_filled,
-                                size: 20,
+                              addVerticalSpace(8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: SizedBox(
+                                      width:100,
+                                      height: 30,
+                                      child: ListView.builder(
+                                        scrollDirection: Axis.horizontal,
+                                        itemCount: a['items'].length,
+                                        itemBuilder: (context, indi) {
+                                          return Text(
+                                            '${a['items'][indi]['name']} (${a['items'][indi]['productQty']}), Frozen chicken(1)',
+                                            style: bodyText14w600(
+                                                color: black.withOpacity(0.4)),
+                                          );
+                                        }
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    'Rs. ${a['total']}',
+                                    style: bodyText14w600(color: primary),
+                                  )
+                                ],
                               ),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.only(top: 5.0, left: 6),
-                                child: Text(
-                                  'Sector 16, Old city 500088',
-                                  style: bodyText14normal(color: black),
-                                ),
+                              addVerticalSpace(8),
+                              const Divider(
+                                thickness: 1,
+                              ),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.home_filled,
+                                    size: 20,
+                                  ),
+                                  Padding(
+                                    padding:
+                                        const EdgeInsets.only(top: 5.0, left: 6),
+                                    child: Text(
+                                      a['address'],
+                                      style: bodyText14normal(color: black),
+                                    ),
+                                  )
+                                ],
                               )
                             ],
-                          )
-                        ],
-                      ),
-                    );
-                  }),
+                          ),
+                        );
+                      });
+                }
+              ),
             )
           ],
         ),

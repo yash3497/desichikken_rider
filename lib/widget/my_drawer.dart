@@ -1,4 +1,5 @@
 import 'package:amaze_rider/views/auth/edit_profile.dart';
+import 'package:amaze_rider/views/humburger_menus_screens/kyc_screen.dart';
 import 'package:amaze_rider/views/humburger_menus_screens/privacy_policy_screen.dart';
 import 'package:amaze_rider/views/humburger_menus_screens/terns_and_conditions.dart';
 import 'package:amaze_rider/views/humburger_menus_screens/wallets_screen.dart';
@@ -83,6 +84,32 @@ class _MyDrawerState extends State<MyDrawer> {
             height: 1,
             thickness: 1,
           ),
+
+
+          ListTile(
+            leading: const Icon(Icons.edit_note_rounded),
+            title: Text(
+              'Kyc Details',
+              style: bodyText14w600(color: black),
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios),
+            onTap: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => const KycScreen()));
+            },
+          ),
+          const Divider(
+            height: 1,
+            thickness: 1,
+          ),
+          const Divider(
+            height: 1,
+            thickness: 1,
+          ),
+
+
+
+
           ListTile(
             leading: const Icon(Icons.edit_note_rounded),
             title: Text(

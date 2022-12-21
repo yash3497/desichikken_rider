@@ -1,6 +1,7 @@
 import 'package:amaze_rider/providers/auth_provider.dart';
 import 'package:amaze_rider/providers/service_procider.dart';
 import 'package:amaze_rider/views/auth/signin_screen.dart';
+import 'package:amaze_rider/views/home/splash.dart';
 import 'package:amaze_rider/widget/my_bottom_navbar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -131,9 +132,7 @@ class _MyAppState extends State<MyApp> {
           theme: ThemeData(
             primarySwatch: Colors.blue,
           ),
-          home: FirebaseAuth.instance.currentUser != null
-              ? BottomNavBar()
-              : SignInScreen()),
+          home: SplashScreen()),
     );
   }
 }
