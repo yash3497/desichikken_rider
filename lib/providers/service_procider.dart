@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 import 'dart:math';
+import 'package:dio/dio.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
@@ -14,23 +15,32 @@ class ServiceProvider with ChangeNotifier {
   final FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   bool status = false;
-  Timer? timer;
+  Timer? timer1;
+  Timer? timer2;
+  Timer? timer3;
 
   List newOrderList = [];
   List deliveredOrderList = [];
   double riderLatitude = 0.0;
   double riderLongitude = 0.0;
   int maxDis = 5;
+// StreamController? stc1;
+//   Stream st1 = FirebaseFirestore.instance
+//       .collection("Orders")
+//       .where("orderAccept", isEqualTo: true)
+//       .where("orderCompleted", isEqualTo: false)
+//       .snapshots();
 
   Future<void> fetchNewOrder() async {
-    // try {
-    //   Position position = await determinePosition();
-    //
-    //   riderLatitude = position.latitude;
-    //   riderLongitude = position.longitude;
-    // }catch(e){}
+    try {
+      Position position = await determinePosition();
+
+      riderLatitude = position.latitude;
+      riderLongitude = position.longitude;
+    } catch (e) {}
     List tempOrder = [];
-    _firebaseFirestore
+    List tempOrder2 = [];
+    FirebaseFirestore.instance
         .collection("Orders")
         .where("orderAccept", isEqualTo: true)
         .where("orderCompleted", isEqualTo: false)
@@ -39,14 +49,33 @@ class ServiceProvider with ChangeNotifier {
       for (var doc in event.docs) {
         double dis = calculateDistanceKM(doc['customerLatlong']['lat'],
             doc['customerLatlong']['long'], riderLatitude, riderLongitude);
-        print(dis);
+        print("Distance $dis");
+        print("Rider lat $riderLatitude");
+        print("Rider long $riderLongitude");
         if ((doc['orderAccepted'] == false ||
                 doc['deliveryPerson'] == _firebaseAuth.currentUser!.uid) &&
             !doc['denied'].contains(_firebaseAuth.currentUser!.uid) &&
             dis <= maxDis) {
           tempOrder.add(doc);
         }
+
+        if (doc['orderAccepted'] == false &&
+            !doc['denied'].contains(_firebaseAuth.currentUser!.uid) &&
+            dis <= maxDis) {
+          print("adding");
+          tempOrder2.add(doc);
+        }
       }
+      if (tempOrder2.isNotEmpty) {
+        //  play audio here
+        print("Play audio");
+        FlutterRingtonePlayer.play(fromAsset: "assets/audio/alert.mpeg");
+      } else {
+        //  stop audio here
+        FlutterRingtonePlayer.stop();
+        print("stop audio");
+      }
+
       newOrderList = tempOrder;
     });
     notifyListeners();
@@ -61,7 +90,7 @@ class ServiceProvider with ChangeNotifier {
       riderLongitude = position.longitude;
     } catch (e) {}
     List tempOrder = [];
-    _firebaseFirestore
+    FirebaseFirestore.instance
         .collection("Orders")
         .where("orderAccept", isEqualTo: true)
         .where("orderCompleted", isEqualTo: false)
@@ -102,8 +131,14 @@ class ServiceProvider with ChangeNotifier {
     } else {
       // stop audio
 
-      if (timer != null) {
-        timer!.cancel();
+      if (timer1 != null) {
+        timer1!.cancel();
+      }
+      if (timer2 != null) {
+        timer2!.cancel();
+      }
+      if (timer3 != null) {
+        timer3!.cancel();
       }
       FlutterRingtonePlayer.stop();
 
@@ -113,12 +148,22 @@ class ServiceProvider with ChangeNotifier {
   }
 
   void runFetchOrderEveryTime() {
-    timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+    timer1 = Timer.periodic(const Duration(seconds: 2), (timer) {
       fetchNewOrder();
-      playSoundCheck();
 
-      fetchDeliveredOrder();
+      // playSoundCheck();
+      // fetchDeliveredOrder();
     });
+    // timer2 = Timer.periodic(const Duration(seconds: 2), (timer) {
+    //   // fetchNewOrder();
+    //   playSoundCheck();
+    //   // fetchDeliveredOrder();
+    // });
+    // timer3 = Timer.periodic(const Duration(seconds: 2), (timer) {
+    //   // fetchNewOrder();
+    //   // playSoundCheck();
+    //   fetchDeliveredOrder();
+    // });
   }
 
   void fetchDeliveredOrder() {
@@ -135,7 +180,6 @@ class ServiceProvider with ChangeNotifier {
       }
       deliveredOrderList = temp;
     });
-
     notifyListeners();
   }
 
@@ -159,24 +203,26 @@ class ServiceProvider with ChangeNotifier {
   }
 
   Future<void> acceptOrder(String docId) async {
-    var dd = await FirebaseFirestore.instance.collection("Orders").doc(docId).get();
-   var did =  FirebaseFirestore.instance.collection("riderPayments").doc();
-   did.set({
-      "name":dd['customerName'],
-      "orderId":dd['orderId'],
-      "items":dd['items'],
-      "charge":dd['deliveryFees'],
-      "total":dd['totalAmount'],
-      "updated":DateTime.now(),
-      "address":dd['deliveryAddress'],
-      "status":"pending",
-     "riderId":FirebaseAuth.instance.currentUser!.uid,
+    var dd =
+        await FirebaseFirestore.instance.collection("Orders").doc(docId).get();
+    var did = FirebaseFirestore.instance.collection("riderPayments").doc();
+    did.set({
+      "name": dd['customerName'],
+      "orderId": dd['orderId'],
+      "items": dd['items'],
+      "charge": dd['deliveryFees'],
+      "total": dd['totalAmount'],
+      "updated": DateTime.now(),
+      "address": dd['deliveryAddress'],
+      "status": "pending",
+      "riderId": FirebaseAuth.instance.currentUser!.uid,
     });
     _firebaseFirestore.collection("Orders").doc(docId).update({
       "deliveryPerson": _firebaseAuth.currentUser!.uid,
       "orderAccepted": true,
       "status": "accepted",
-      "riderPaymentId":did.id,
+      "riderPaymentId": did.id,
+      "orderProcess": true,
     }).then((value) {
       _firebaseFirestore
           .collection("Riders")
@@ -187,15 +233,19 @@ class ServiceProvider with ChangeNotifier {
   }
 
   Future<void> completeOrder(String docId) async {
-    var dd = await FirebaseFirestore.instance.collection("Orders").doc(docId).get();
+    var dd =
+        await FirebaseFirestore.instance.collection("Orders").doc(docId).get();
     _firebaseFirestore.collection("Orders").doc(docId).update({
       "deliveryPerson": _firebaseAuth.currentUser!.uid,
       "orderAccepted": true,
       "status": "completed",
       "orderCompleted": true,
     }).then((value) async {
-      FirebaseFirestore.instance.collection("riderPayments").doc(dd['riderPaymentId']).update({
-        "status":"completed",
+      FirebaseFirestore.instance
+          .collection("riderPayments")
+          .doc(dd['riderPaymentId'])
+          .update({
+        "status": "completed",
       });
       var orderD = await FirebaseFirestore.instance
           .collection("Orders")
@@ -212,6 +262,7 @@ class ServiceProvider with ChangeNotifier {
         ]),
         "inTravel": false,
       });
+      await sendNotification(orderD['uid']);
     });
     notifyListeners();
   }
@@ -238,16 +289,28 @@ class ServiceProvider with ChangeNotifier {
         } else {
           rider.reference.update({'isOnline': false});
           status = false;
-          if (timer != null) {
-            timer!.cancel();
+          if (timer1 != null) {
+            timer1!.cancel();
+          }
+          if (timer2 != null) {
+            timer2!.cancel();
+          }
+          if (timer3 != null) {
+            timer3!.cancel();
           }
           FlutterRingtonePlayer.stop();
         }
       } else {
         rider.reference.update({'isOnline': false, 'inTravel': false});
         status = false;
-        if (timer != null) {
-          timer!.cancel();
+        if (timer1 != null) {
+          timer1!.cancel();
+        }
+        if (timer2 != null) {
+          timer2!.cancel();
+        }
+        if (timer3 != null) {
+          timer3!.cancel();
         }
         FlutterRingtonePlayer.stop();
       }
@@ -312,6 +375,8 @@ class ServiceProvider with ChangeNotifier {
   }
 
   Future<void> openMap(double latitude, double longitude) async {
+    print(latitude);
+    print(longitude);
     // String googleUrl =
     //     'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
     // await launchUrl(Uri.parse(googleUrl));
@@ -342,5 +407,46 @@ class ServiceProvider with ChangeNotifier {
       }
     }
     return am;
+  }
+
+  Future<void> sendNotification(String userDocId) async {
+    var postUrl = "https://fcm.googleapis.com/fcm/send";
+    var f = await FirebaseFirestore.instance
+        .collection("Users")
+        .doc(userDocId)
+        .get();
+    var token = f.data()!['token'] ?? "";
+    print(token);
+    final data = {
+      "notification": {
+        "body": "Successfully!!!",
+        "title": "Your order delivered"
+      },
+      "priority": "high",
+      "data": {
+        "click_action": "FLUTTER_NOTIFICATION_CLICK",
+        "id": "1",
+        "status": "done"
+      },
+      "to": "$token"
+    };
+
+    final headers = {
+      'content-type': 'application/json',
+      'Authorization':
+          'key=AAAAGl6VFKY:APA91bHLSjT-_c5cG3wkr8Gop-bhV6_Y0gyRW29s7SZHLyxh8l9LgedxUKOTOd-NGXNBmZIhEtNyMsfTYJWxC39bQaB_OahvZwbWKFptvnshLKRz7cguBbPcIccd9pgVIoa2LCmubAWJ'
+    };
+
+    BaseOptions options = BaseOptions(
+      connectTimeout: 5000,
+      receiveTimeout: 3000,
+      headers: headers,
+    );
+
+    try {
+      await Dio(options).post(postUrl, data: data);
+    } catch (e) {
+      print('exception $e');
+    }
   }
 }

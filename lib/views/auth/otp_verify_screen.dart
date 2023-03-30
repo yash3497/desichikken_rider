@@ -1,7 +1,9 @@
 import 'dart:developer';
+import 'dart:ui';
 
 import 'package:amaze_rider/views/auth/create_profile_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pinput/pinput.dart';
 import 'package:provider/provider.dart';
 
@@ -106,17 +108,23 @@ class OtpVerifyScreen extends StatelessWidget {
                   ),
                 ),
                 addVerticalSpace(20),
-                RichText(
-                    text: TextSpan(children: [
-                  TextSpan(
-                      text: "Didn't receive an OTP? ",
-                      style: bodyText13normal(color: black)),
-                  TextSpan(
-                      text: "Resent OTP",
-                      style: TextStyle(
-                          color: primary,
-                          decoration: TextDecoration.underline)),
-                ])),
+                GestureDetector(
+                  onTap: () {
+                    Fluttertoast.showToast(msg: 'Otp Sent');
+                    authProvider.verifyMobile(number, () {});
+                  },
+                  child: RichText(
+                      text: TextSpan(children: [
+                    TextSpan(
+                        text: "Didn't receive an OTP? ",
+                        style: bodyText13normal(color: black)),
+                    TextSpan(
+                        text: "Resent OTP",
+                        style: TextStyle(
+                            color: primary,
+                            decoration: TextDecoration.underline)),
+                  ])),
+                ),
                 addVerticalSpace(50),
                 CustomButton(
                     buttonName: 'Verify',
@@ -129,7 +137,7 @@ class OtpVerifyScreen extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                                 builder: (context) => CreateProfileScreen()));
-                      },context);
+                      }, context);
                     })
               ],
             ),

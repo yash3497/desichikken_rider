@@ -66,6 +66,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  int index = 0;
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -167,20 +169,23 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Image.asset('assets/images/home1.png'),
                             StreamBuilder(
-                              stream: FirebaseFirestore.instance.collection("Riders").doc(FirebaseAuth.instance.currentUser!.uid).snapshots(),
-                              builder: (context,AsyncSnapshot snapshot) {
-                                return RichText(
-                                    text: TextSpan(children: [
-                                  TextSpan(
-                                      text: 'Balance: ',
-                                      style: bodyText14normal(
-                                          color: black.withOpacity(0.5))),
-                                  TextSpan(
-                                      text: 'Rs.${snapshot.data.data()['wallet']??0}',
-                                      style: bodyText14w600(color: black))
-                                ]));
-                              }
-                            )
+                                stream: FirebaseFirestore.instance
+                                    .collection("Riders")
+                                    .doc(FirebaseAuth.instance.currentUser!.uid)
+                                    .snapshots(),
+                                builder: (context, AsyncSnapshot snapshot) {
+                                  return RichText(
+                                      text: TextSpan(children: [
+                                    TextSpan(
+                                        text: 'Balance: ',
+                                        style: bodyText14normal(
+                                            color: black.withOpacity(0.5))),
+                                    TextSpan(
+                                        text:
+                                            'Rs.${snapshot.data.data()['wallet'] ?? 0}',
+                                        style: bodyText14w600(color: black))
+                                  ]));
+                                })
                           ],
                         ),
                       ),
@@ -208,11 +213,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                               WalletScreen()));
                                 }
                                 if (index == 2) {
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              RejectedDeliveryScreen()));
+                                  // Navigator.push(
+                                  //     context,
+                                  //     MaterialPageRoute(
+                                  //         builder: (context) =>
+                                  //             RejectedDeliveryScreen()));
                                 }
                               },
                               child: Container(
@@ -278,23 +283,24 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   );
                                                 })
                                             : FutureBuilder(
-                                              future: sp.calculateTodayEarning(),
-                                              builder: (context, snapshot) {
-                                                if(!snapshot.hasData){
-                                                  return Text(
-                                                    '0',
-                                                    style: bodyText14w600(
-                                                        color: black),
-                                                  );
-                                                }else {
-                                                  return Text(
-                                                    snapshot.data!.toStringAsFixed(2),
-                                                    style: bodyText14w600(
-                                                        color: black),
-                                                  );
-                                                }
-                                              }
-                                            ),
+                                                future:
+                                                    sp.calculateTodayEarning(),
+                                                builder: (context, snapshot) {
+                                                  if (!snapshot.hasData) {
+                                                    return Text(
+                                                      '0',
+                                                      style: bodyText14w600(
+                                                          color: black),
+                                                    );
+                                                  } else {
+                                                    return Text(
+                                                      snapshot.data!
+                                                          .toStringAsFixed(2),
+                                                      style: bodyText14w600(
+                                                          color: black),
+                                                    );
+                                                  }
+                                                }),
                                   ],
                                 ),
                               ),
@@ -309,13 +315,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   InkWell(
                     onTap: () {
                       setState(() {
-                        isChange = false;
+                        // isChange = false;
+                        index = 0;
                       });
                     },
                     child: Container(
                       height: height(context) * 0.05,
-                      width: width(context) * 0.4,
-                      decoration: !isChange
+                      width: width(context) * 0.3,
+                      decoration: index == 0
                           ? BoxDecoration(
                               gradient: redGradient(),
                               borderRadius: BorderRadius.circular(30))
@@ -324,7 +331,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Text(
                           'New orders (${_serviceProvider.newOrderList.length})',
                           style: bodyText13normal(
-                              color: !isChange ? white : black),
+                              color: index == 0 ? white : black),
                         ),
                       ),
                     ),
@@ -333,30 +340,95 @@ class _HomeScreenState extends State<HomeScreen> {
                   InkWell(
                     onTap: () {
                       setState(() {
-                        isChange = true;
+                        // isChange = true;
+                        index = 1;
                       });
                     },
                     child: Container(
                       height: height(context) * 0.05,
-                      width: width(context) * 0.4,
-                      decoration: isChange
+                      width: width(context) * 0.3,
+                      decoration: index == 1
                           ? BoxDecoration(
                               gradient: redGradient(),
                               borderRadius: BorderRadius.circular(30))
                           : myFillBoxDecoration(0, Colors.grey.shade200, 30),
                       child: Center(
-                        child: Text(
-                          'Delivered (${sp.deliveredOrderList.length})',
-                          style:
-                              bodyText13normal(color: isChange ? white : black),
-                        ),
+                        child: StreamBuilder(
+                            stream: FirebaseFirestore.instance
+                                .collection("Orders")
+                                .where("deliveryPerson",
+                                    isEqualTo:
+                                        FirebaseAuth.instance.currentUser!.uid)
+                                .where("orderCompleted", isEqualTo: true)
+                                .snapshots(),
+                            builder: (context, AsyncSnapshot snapshot) {
+                              if (!snapshot.hasData) {
+                                return Text(
+                                  'Delivered (0)',
+                                  style: bodyText13normal(
+                                      color: index == 1 ? white : black),
+                                );
+                              }
+                              return Text(
+                                'Delivered (${snapshot.data.docs.length})',
+                                style: bodyText13normal(
+                                    color: index == 1 ? white : black),
+                              );
+                            }),
+                      ),
+                    ),
+                  ),
+                  addHorizontalySpace(8),
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        // isChange = true;
+                        index = 2;
+                      });
+                    },
+                    child: Container(
+                      height: height(context) * 0.05,
+                      width: width(context) * 0.3,
+                      decoration: index == 2
+                          ? BoxDecoration(
+                              gradient: redGradient(),
+                              borderRadius: BorderRadius.circular(30))
+                          : myFillBoxDecoration(0, Colors.grey.shade200, 30),
+                      child: Center(
+                        child: StreamBuilder(
+                            stream: FirebaseFirestore.instance
+                                .collection("Orders")
+                                .where("deliveryPerson",
+                                    isEqualTo:
+                                        FirebaseAuth.instance.currentUser!.uid)
+                                .where("createdAt",
+                                    isGreaterThanOrEqualTo: DateTime(
+                                        DateTime.now().year,
+                                        DateTime.now().month,
+                                        DateTime.now().day))
+                                .snapshots(),
+                            builder: (context, AsyncSnapshot snapshot) {
+                              if (!snapshot.hasData) {
+                                return Text(
+                                  'Today orders (0)',
+                                  style: bodyText13normal(
+                                      color: index == 2 ? white : black),
+                                );
+                              } else {
+                                return Text(
+                                  'Today orders (${snapshot.data.docs.length})',
+                                  style: bodyText13normal(
+                                      color: index == 2 ? white : black),
+                                );
+                              }
+                            }),
                       ),
                     ),
                   )
                 ],
               ),
               addVerticalSpace(20),
-              !isChange
+              index == 0
                   ? Expanded(
                       child: ListView.builder(
                           itemCount: sp.newOrderList.length,
@@ -530,7 +602,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   6),
                                               child: Center(
                                                 child: Text(
-                                                  'Already Picked',
+                                                  'Accepted',
                                                   style: bodyText14w600(
                                                       color: white),
                                                 ),
@@ -588,211 +660,518 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             );
                           }))
-                  : Expanded(
-                      child: ListView.builder(
-                          itemCount: sp.deliveredOrderList.length,
-                          itemBuilder: (ctx, i) {
-                            var o = sp.deliveredOrderList[i];
-                            return Container(
-                              margin: EdgeInsets.all(10),
-                              padding: EdgeInsets.all(10),
-                              height: height(context) * 0.41,
-                              width: width(context) * 0.95,
-                              decoration: shadowDecoration(6, 6),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    o['customerName'],
-                                    style: bodyText14w600(color: black),
-                                  ),
-                                  addVerticalSpace(7),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        o['orderId'],
-                                        style: bodyText14normal(color: black),
-                                      ),
-                                      addHorizontalySpace(5),
-                                      Container(
-                                        height: 15,
-                                        width: width(context) * 0.1,
-                                        decoration: myOutlineBoxDecoration(
-                                            1, primary, 1),
-                                        child: Center(
-                                          child: Text(
-                                            o['isPaid'] ? 'PAID' : 'UNPAID',
-                                            style:
-                                                bodytext12Bold(color: primary),
-                                          ),
-                                        ),
-                                      ),
-                                      Spacer(),
-                                      Text(
-                                        sp.findTime(o['createdAt']),
-                                        style: bodyText14w600(color: black),
-                                      )
-                                    ],
-                                  ),
-                                  addVerticalSpace(10),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        '${o['items'].length} Item(s) Order ',
-                                        style: bodyText14w600(
-                                            color: black.withOpacity(0.3)),
-                                      ),
-                                      Spacer(),
-                                      Image.asset('assets/images/way.png'),
-                                      Text(
-                                        '${sp.calculateDistanceKM(o['customerLatlong']['lat'], o['customerLatlong']['long'], sp.riderLatitude, sp.riderLongitude).toStringAsFixed(2)} KM',
-                                        style: bodyText14w600(color: black),
-                                      ),
-                                      Spacer(),
-                                      Text(
-                                        'Rs.${o['totalAmount']}',
-                                        style: bodyText14w600(color: black),
-                                      ),
-                                    ],
-                                  ),
-                                  const Divider(
-                                    thickness: 1,
-                                  ),
-                                  Container(
-                                    padding: EdgeInsets.all(6),
-                                    height: height(context) * 0.15,
-                                    width: width(context) * 0.92,
-                                    decoration: myOutlineBoxDecoration(
-                                        1, black.withOpacity(0.3), 8),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceAround,
-                                      children: [
-                                        Row(
+                  : (index == 1)
+                      ? Expanded(
+                          child: StreamBuilder(
+                              stream: FirebaseFirestore.instance
+                                  .collection("Orders")
+                                  .where("deliveryPerson",
+                                      isEqualTo: FirebaseAuth
+                                          .instance.currentUser!.uid)
+                                  .where("orderCompleted", isEqualTo: true)
+                                  .snapshots(),
+                              builder: (context, AsyncSnapshot snapshot) {
+                                if (!snapshot.hasData) {
+                                  return Center(
+                                      child: CircularProgressIndicator());
+                                }
+                                return ListView.builder(
+                                    itemCount: snapshot.data.docs.length,
+                                    itemBuilder: (ctx, i) {
+                                      var o = snapshot.data.docs[i];
+                                      return Container(
+                                        margin: EdgeInsets.all(10),
+                                        padding: EdgeInsets.all(10),
+                                        height: height(context) * 0.41,
+                                        width: width(context) * 0.95,
+                                        decoration: shadowDecoration(6, 6),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
-                                            Icon(
-                                              Icons.houseboat_outlined,
-                                              color: primary,
-                                              size: 35,
+                                            Text(
+                                              o['customerName'],
+                                              style:
+                                                  bodyText14w600(color: black),
                                             ),
-                                            addHorizontalySpace(8),
-                                            Column(
+                                            addVerticalSpace(7),
+                                            Row(
                                               children: [
                                                 Text(
-                                                  o['vendorLocation'],
-                                                  style: bodyText16w600(
-                                                          color: primary)
-                                                      .copyWith(fontSize: 10),
-                                                ),
-                                                Text(
-                                                  'Pick up Location',
+                                                  o['orderId'],
                                                   style: bodyText14normal(
-                                                      color: black
-                                                          .withOpacity(0.4)),
+                                                      color: black),
                                                 ),
-                                              ],
-                                            ),
-                                            Spacer(),
-                                            // Text(
-                                            //   '08:00PM',
-                                            //   style: bodyText14w600(color: black),
-                                            // )
-                                          ],
-                                        ),
-                                        const Divider(
-                                          thickness: 1,
-                                        ),
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              Icons.home_filled,
-                                              color: black,
-                                              size: 35,
-                                            ),
-                                            addHorizontalySpace(8),
-                                            Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  o['deliveryAddress'],
-                                                  style: bodyText13normal(
-                                                          color: black)
-                                                      .copyWith(fontSize: 10),
-                                                ),
-                                                Text(
-                                                  'Delivery location',
-                                                  style: bodyText14normal(
-                                                      color: black
-                                                          .withOpacity(0.4)),
-                                                ),
-                                              ],
-                                            ),
-                                            Spacer(),
-                                            // Text(
-                                            //   '08:25PM',
-                                            //   style: bodyText14w600(color: black),
-                                            // )
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  addVerticalSpace(6),
-                                  Expanded(
-                                      child: ListView.builder(
-                                          physics:
-                                              NeverScrollableScrollPhysics(),
-                                          itemCount: o['items'].length,
-                                          itemBuilder: (context, i) {
-                                            return Column(
-                                              children: [
-                                                Row(
-                                                  children: [
-                                                    SizedBox(
-                                                      height: height(context) *
-                                                          0.06,
-                                                      width:
-                                                          width(context) * 0.2,
-                                                      child: Image.network(
-                                                        o['items'][i]['image'],
-                                                        fit: BoxFit.fill,
-                                                      ),
+                                                addHorizontalySpace(5),
+                                                Container(
+                                                  height: 15,
+                                                  width: width(context) * 0.1,
+                                                  decoration:
+                                                      myOutlineBoxDecoration(
+                                                          1, primary, 1),
+                                                  child: Center(
+                                                    child: Text(
+                                                      o['isPaid']
+                                                          ? 'PAID'
+                                                          : 'UNPAID',
+                                                      style: bodytext12Bold(
+                                                          color: primary),
                                                     ),
-                                                    addHorizontalySpace(5),
-                                                    Column(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        Text(
-                                                          '${o['items'][i]['name']} (${o['items'][i]['productQty']})',
-                                                          style: bodytext12Bold(
-                                                              color: black),
-                                                        ),
-                                                        addVerticalSpace(5),
-                                                        Text(
-                                                          '${o['items'][i]['weight']}gms I Net: ${o['items'][i]['netWeight']}gms',
-                                                          style: bodyText11Small(
-                                                              color: black
-                                                                  .withOpacity(
-                                                                      0.3)),
-                                                        )
-                                                      ],
-                                                    )
-                                                  ],
+                                                  ),
                                                 ),
-                                                const Divider(
-                                                  height: 5,
-                                                  thickness: 1,
+                                                Spacer(),
+                                                Text(
+                                                  sp.findTime(o['createdAt']),
+                                                  style: bodyText14w600(
+                                                      color: black),
                                                 )
                                               ],
-                                            );
-                                          }))
-                                ],
-                              ),
-                            );
-                          }))
+                                            ),
+                                            addVerticalSpace(10),
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  '${o['items'].length} Item(s) Order ',
+                                                  style: bodyText14w600(
+                                                      color: black
+                                                          .withOpacity(0.3)),
+                                                ),
+                                                Spacer(),
+                                                Image.asset(
+                                                    'assets/images/way.png'),
+                                                Text(
+                                                  '${sp.calculateDistanceKM(o['customerLatlong']['lat'], o['customerLatlong']['long'], sp.riderLatitude, sp.riderLongitude).toStringAsFixed(2)} KM',
+                                                  style: bodyText14w600(
+                                                      color: black),
+                                                ),
+                                                Spacer(),
+                                                Text(
+                                                  'Rs.${o['totalAmount']}',
+                                                  style: bodyText14w600(
+                                                      color: black),
+                                                ),
+                                              ],
+                                            ),
+                                            const Divider(
+                                              thickness: 1,
+                                            ),
+                                            Container(
+                                              padding: EdgeInsets.all(6),
+                                              height: height(context) * 0.15,
+                                              width: width(context) * 0.92,
+                                              decoration:
+                                                  myOutlineBoxDecoration(
+                                                      1,
+                                                      black.withOpacity(0.3),
+                                                      8),
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceAround,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Icon(
+                                                        Icons
+                                                            .houseboat_outlined,
+                                                        color: primary,
+                                                        size: 35,
+                                                      ),
+                                                      addHorizontalySpace(8),
+                                                      Column(
+                                                        children: [
+                                                          Text(
+                                                            o['vendorLocation'],
+                                                            style: bodyText16w600(
+                                                                    color:
+                                                                        primary)
+                                                                .copyWith(
+                                                                    fontSize:
+                                                                        10),
+                                                          ),
+                                                          Text(
+                                                            'Pick up Location',
+                                                            style: bodyText14normal(
+                                                                color: black
+                                                                    .withOpacity(
+                                                                        0.4)),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      Spacer(),
+                                                      // Text(
+                                                      //   '08:00PM',
+                                                      //   style: bodyText14w600(color: black),
+                                                      // )
+                                                    ],
+                                                  ),
+                                                  const Divider(
+                                                    thickness: 1,
+                                                  ),
+                                                  Row(
+                                                    children: [
+                                                      Icon(
+                                                        Icons.home_filled,
+                                                        color: black,
+                                                        size: 35,
+                                                      ),
+                                                      addHorizontalySpace(8),
+                                                      Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Text(
+                                                            o['deliveryAddress'],
+                                                            style: bodyText13normal(
+                                                                    color:
+                                                                        black)
+                                                                .copyWith(
+                                                                    fontSize:
+                                                                        10),
+                                                          ),
+                                                          Text(
+                                                            'Delivery location',
+                                                            style: bodyText14normal(
+                                                                color: black
+                                                                    .withOpacity(
+                                                                        0.4)),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      Spacer(),
+                                                      // Text(
+                                                      //   '08:25PM',
+                                                      //   style: bodyText14w600(color: black),
+                                                      // )
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            addVerticalSpace(6),
+                                            Expanded(
+                                                child: ListView.builder(
+                                                    physics:
+                                                        NeverScrollableScrollPhysics(),
+                                                    itemCount:
+                                                        o['items'].length,
+                                                    itemBuilder: (context, i) {
+                                                      return Column(
+                                                        children: [
+                                                          Row(
+                                                            children: [
+                                                              SizedBox(
+                                                                height: height(
+                                                                        context) *
+                                                                    0.06,
+                                                                width: width(
+                                                                        context) *
+                                                                    0.2,
+                                                                child: Image
+                                                                    .network(
+                                                                  o['items'][i]
+                                                                      ['image'],
+                                                                  fit: BoxFit
+                                                                      .fill,
+                                                                ),
+                                                              ),
+                                                              addHorizontalySpace(
+                                                                  5),
+                                                              Column(
+                                                                crossAxisAlignment:
+                                                                    CrossAxisAlignment
+                                                                        .start,
+                                                                children: [
+                                                                  Text(
+                                                                    '${o['items'][i]['name']} (${o['items'][i]['productQty']})',
+                                                                    style: bodytext12Bold(
+                                                                        color:
+                                                                            black),
+                                                                  ),
+                                                                  addVerticalSpace(
+                                                                      5),
+                                                                  Text(
+                                                                    '${o['items'][i]['weight']}gms I Net: ${o['items'][i]['netWeight']}gms',
+                                                                    style: bodyText11Small(
+                                                                        color: black
+                                                                            .withOpacity(0.3)),
+                                                                  )
+                                                                ],
+                                                              )
+                                                            ],
+                                                          ),
+                                                          const Divider(
+                                                            height: 5,
+                                                            thickness: 1,
+                                                          )
+                                                        ],
+                                                      );
+                                                    }))
+                                          ],
+                                        ),
+                                      );
+                                    });
+                              }))
+                      : Expanded(
+                          child: StreamBuilder(
+                              stream: FirebaseFirestore.instance
+                                  .collection("Orders")
+                                  .where("deliveryPerson",
+                                      isEqualTo: FirebaseAuth
+                                          .instance.currentUser!.uid)
+                                  .where("createdAt",
+                                      isGreaterThanOrEqualTo: DateTime(
+                                          DateTime.now().year,
+                                          DateTime.now().month,
+                                          DateTime.now().day))
+                                  .snapshots(),
+                              builder: (context, AsyncSnapshot snapshot) {
+                                if (!snapshot.hasData) {
+                                  return const Center(
+                                      child: CircularProgressIndicator());
+                                } else {
+                                  return ListView.builder(
+                                      itemCount: snapshot.data.docs.length,
+                                      itemBuilder: (ctx, i) {
+                                        var o = snapshot.data.docs[i];
+                                        return Container(
+                                          margin: EdgeInsets.all(10),
+                                          padding: EdgeInsets.all(10),
+                                          height: height(context) * 0.41,
+                                          width: width(context) * 0.95,
+                                          decoration: shadowDecoration(6, 6),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                o['customerName'],
+                                                style: bodyText14w600(
+                                                    color: black),
+                                              ),
+                                              addVerticalSpace(7),
+                                              Row(
+                                                children: [
+                                                  Text(
+                                                    o['orderId'],
+                                                    style: bodyText14normal(
+                                                        color: black),
+                                                  ),
+                                                  addHorizontalySpace(5),
+                                                  Container(
+                                                    height: 15,
+                                                    width: width(context) * 0.1,
+                                                    decoration:
+                                                        myOutlineBoxDecoration(
+                                                            1, primary, 1),
+                                                    child: Center(
+                                                      child: Text(
+                                                        o['isPaid']
+                                                            ? 'PAID'
+                                                            : 'UNPAID',
+                                                        style: bodytext12Bold(
+                                                            color: primary),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Spacer(),
+                                                  Text(
+                                                    sp.findTime(o['createdAt']),
+                                                    style: bodyText14w600(
+                                                        color: black),
+                                                  )
+                                                ],
+                                              ),
+                                              addVerticalSpace(10),
+                                              Row(
+                                                children: [
+                                                  Text(
+                                                    '${o['items'].length} Item(s) Order ',
+                                                    style: bodyText14w600(
+                                                        color: black
+                                                            .withOpacity(0.3)),
+                                                  ),
+                                                  Spacer(),
+                                                  Image.asset(
+                                                      'assets/images/way.png'),
+                                                  Text(
+                                                    '${sp.calculateDistanceKM(o['customerLatlong']['lat'], o['customerLatlong']['long'], sp.riderLatitude, sp.riderLongitude).toStringAsFixed(2)} KM',
+                                                    style: bodyText14w600(
+                                                        color: black),
+                                                  ),
+                                                  Spacer(),
+                                                  Text(
+                                                    'Rs.${o['totalAmount']}',
+                                                    style: bodyText14w600(
+                                                        color: black),
+                                                  ),
+                                                ],
+                                              ),
+                                              const Divider(
+                                                thickness: 1,
+                                              ),
+                                              Container(
+                                                padding: EdgeInsets.all(6),
+                                                height: height(context) * 0.15,
+                                                width: width(context) * 0.92,
+                                                decoration:
+                                                    myOutlineBoxDecoration(
+                                                        1,
+                                                        black.withOpacity(0.3),
+                                                        8),
+                                                child: Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceAround,
+                                                  children: [
+                                                    Row(
+                                                      children: [
+                                                        Icon(
+                                                          Icons
+                                                              .houseboat_outlined,
+                                                          color: primary,
+                                                          size: 35,
+                                                        ),
+                                                        addHorizontalySpace(8),
+                                                        Column(
+                                                          children: [
+                                                            Text(
+                                                              o['vendorLocation'],
+                                                              style: bodyText16w600(
+                                                                      color:
+                                                                          primary)
+                                                                  .copyWith(
+                                                                      fontSize:
+                                                                          10),
+                                                            ),
+                                                            Text(
+                                                              'Pick up Location',
+                                                              style: bodyText14normal(
+                                                                  color: black
+                                                                      .withOpacity(
+                                                                          0.4)),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        Spacer(),
+                                                        // Text(
+                                                        //   '08:00PM',
+                                                        //   style: bodyText14w600(color: black),
+                                                        // )
+                                                      ],
+                                                    ),
+                                                    const Divider(
+                                                      thickness: 1,
+                                                    ),
+                                                    Row(
+                                                      children: [
+                                                        Icon(
+                                                          Icons.home_filled,
+                                                          color: black,
+                                                          size: 35,
+                                                        ),
+                                                        addHorizontalySpace(8),
+                                                        Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            Text(
+                                                              o['deliveryAddress'],
+                                                              style: bodyText13normal(
+                                                                      color:
+                                                                          black)
+                                                                  .copyWith(
+                                                                      fontSize:
+                                                                          10),
+                                                            ),
+                                                            Text(
+                                                              'Delivery location',
+                                                              style: bodyText14normal(
+                                                                  color: black
+                                                                      .withOpacity(
+                                                                          0.4)),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        Spacer(),
+                                                        // Text(
+                                                        //   '08:25PM',
+                                                        //   style: bodyText14w600(color: black),
+                                                        // )
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              addVerticalSpace(6),
+                                              Expanded(
+                                                  child: ListView.builder(
+                                                      physics:
+                                                          NeverScrollableScrollPhysics(),
+                                                      itemCount:
+                                                          o['items'].length,
+                                                      itemBuilder:
+                                                          (context, i) {
+                                                        return Column(
+                                                          children: [
+                                                            Row(
+                                                              children: [
+                                                                SizedBox(
+                                                                  height: height(
+                                                                          context) *
+                                                                      0.06,
+                                                                  width: width(
+                                                                          context) *
+                                                                      0.2,
+                                                                  child: Image
+                                                                      .network(
+                                                                    o['items']
+                                                                            [i][
+                                                                        'image'],
+                                                                    fit: BoxFit
+                                                                        .fill,
+                                                                  ),
+                                                                ),
+                                                                addHorizontalySpace(
+                                                                    5),
+                                                                Column(
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment
+                                                                          .start,
+                                                                  children: [
+                                                                    Text(
+                                                                      '${o['items'][i]['name']} (${o['items'][i]['productQty']})',
+                                                                      style: bodytext12Bold(
+                                                                          color:
+                                                                              black),
+                                                                    ),
+                                                                    addVerticalSpace(
+                                                                        5),
+                                                                    Text(
+                                                                      '${o['items'][i]['weight']}gms I Net: ${o['items'][i]['netWeight']}gms',
+                                                                      style: bodyText11Small(
+                                                                          color:
+                                                                              black.withOpacity(0.3)),
+                                                                    )
+                                                                  ],
+                                                                )
+                                                              ],
+                                                            ),
+                                                            const Divider(
+                                                              height: 5,
+                                                              thickness: 1,
+                                                            )
+                                                          ],
+                                                        );
+                                                      }))
+                                            ],
+                                          ),
+                                        );
+                                      });
+                                }
+                              }))
             ])
           : OfflineScreen(),
     );

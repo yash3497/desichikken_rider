@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_switch/flutter_switch.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
@@ -112,9 +113,25 @@ class _KycScreenState extends State<KycScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CustomTextField(
-                hintText: 'IFSC',
-                controller: ifsc,
+              SizedBox(
+                height: 45,
+                width: width(context) * 0.91,
+                child: TextFormField(
+                  controller: ifsc,
+                  decoration: InputDecoration(
+                      border: const OutlineInputBorder(
+                        // width: 0.0 produces a thin "hairline" border
+                        borderRadius: BorderRadius.all(Radius.circular(15.0)),
+                        borderSide: BorderSide.none,
+                      ),
+                      hintStyle: const TextStyle(
+                        color: Colors.black38,
+                      ),
+                      contentPadding: const EdgeInsets.all(10),
+                      filled: true,
+                      fillColor: black.withOpacity(0.05),
+                      hintText: 'IFSC'),
+                ),
               )
             ],
           ),
@@ -201,46 +218,57 @@ class _KycScreenState extends State<KycScreen> {
                     if (accountNumber.text != "" &&
                         nameAsBank.text != "" &&
                         ifsc.text != "") {
-                      setState(() {
-                        loading = true;
-                      });
-
-                      if (image != null) {
-                        FirebaseStorage storage = FirebaseStorage.instance;
-                        Reference ref = storage.ref().child(
-                            "rider/kyc/${FirebaseAuth.instance.currentUser!.uid}");
-
-                        UploadTask uploadTask = ref.putFile(image!);
-                        setState(() {});
-                        await uploadTask.whenComplete(() async {
-                          var url = await ref.getDownloadURL();
-                          imaUrl = url;
-                        }).catchError((onError) {});
-                      }
-
-                      if (image != null) {
-                        FirebaseFirestore.instance
-                            .collection("Riders")
-                            .doc(FirebaseAuth.instance.currentUser!.uid)
-                            .update({
-                          "nameAsBank": nameAsBank.text,
-                          "ifsc": ifsc.text,
-                          "accountNumber": accountNumber.text,
-                          "personalKyc": imaUrl,
-                          "lastUpdated": DateTime.now(),
+                      RegExp r  = RegExp(r'^[A-Z]{4}0[A-Z0-9]{6}$');
+                      if(r.hasMatch(ifsc.text)) {
+                        setState(() {
+                          loading = true;
                         });
-                        Fluttertoast.showToast(msg: "Updated Successfully");
-                      } else {
-                        FirebaseFirestore.instance
-                            .collection("Riders")
-                            .doc(FirebaseAuth.instance.currentUser!.uid)
-                            .update({
-                          "nameAsBank": nameAsBank.text,
-                          "ifsc": ifsc.text,
-                          "accountNumber": accountNumber.text,
-                          "lastUpdated": DateTime.now(),
+
+                        if (image != null) {
+                          FirebaseStorage storage = FirebaseStorage.instance;
+                          Reference ref = storage.ref().child(
+                              "rider/kyc/${FirebaseAuth.instance.currentUser!
+                                  .uid}");
+
+                          UploadTask uploadTask = ref.putFile(image!);
+                          setState(() {});
+                          await uploadTask.whenComplete(() async {
+                            var url = await ref.getDownloadURL();
+                            imaUrl = url;
+                          }).catchError((onError) {});
+                        }
+
+                        if (image != null) {
+                          FirebaseFirestore.instance
+                              .collection("Riders")
+                              .doc(FirebaseAuth.instance.currentUser!.uid)
+                              .update({
+                            "nameAsBank": nameAsBank.text,
+                            "ifsc": ifsc.text,
+                            "accountNumber": accountNumber.text,
+                            "personalKyc": imaUrl,
+                            "lastUpdated": DateTime.now(),
+                          });
+                          Fluttertoast.showToast(msg: "Updated Successfully");
+                        }
+                        else {
+                          FirebaseFirestore.instance
+                              .collection("Riders")
+                              .doc(FirebaseAuth.instance.currentUser!.uid)
+                              .update({
+                            "nameAsBank": nameAsBank.text,
+                            "ifsc": ifsc.text,
+                            "accountNumber": accountNumber.text,
+                            "lastUpdated": DateTime.now(),
+                          });
+                          Fluttertoast.showToast(msg: "Updated Successfully");
+                        }
+                      }else{
+                        Fluttertoast.showToast(msg: "Invalid IFSC code");
+                        ifsc.clear();
+                        setState(() {
+
                         });
-                        Fluttertoast.showToast(msg: "Updated Successfully");
                       }
                     }else{
                       Fluttertoast.showToast(msg: "Please Provide all details");

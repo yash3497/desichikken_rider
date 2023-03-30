@@ -23,7 +23,7 @@ class _SplashScreenState extends State<SplashScreen> {
     fetchData();
   }
   fetchData()async{
-    Timer(Duration(seconds: 2), () async {
+    Timer(Duration(seconds: 1), () async {
       if(FirebaseAuth.instance.currentUser != null){
         var d = await FirebaseFirestore.instance
             .collection("Riders")

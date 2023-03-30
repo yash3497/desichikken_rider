@@ -25,17 +25,17 @@ class AuthProvider extends ChangeNotifier {
     _auth.verifyPhoneNumber(
         phoneNumber: "+91$phone",
         verificationCompleted: (PhoneAuthCredential credential) async {
-          _auth.signInWithCredential(credential).then((value) async {
-            if (value.user != null) {
-              var response = await FirebaseFirestore.instance
-                  .collection("Riders")
-                  .where("Number", isEqualTo: "+91${phone}")
-                  .get();
+          // _auth.signInWithCredential(credential).then((value) async {
+          //   if (value.user != null) {
+          //     var response = await FirebaseFirestore.instance
+          //         .collection("Riders")
+          //         .where("Number", isEqualTo: "+91${phone}")
+          //         .get();
 
-              if (response.docs.isNotEmpty) {
-              } else {}
-            }
-          });
+          //     if (response.docs.isNotEmpty) {
+          //     } else {}
+          //   }
+          // });
         },
         verificationFailed: (FirebaseAuthException exception) {
           // print(exception.message);
@@ -53,30 +53,28 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> verifyOtp(
-      verificationId, smsCode, VoidCallback onVerifyOtp,context) async {
+      verificationId, smsCode, VoidCallback onVerifyOtp, context) async {
     // Create a PhoneAuthCredential with the code
     PhoneAuthCredential credential = PhoneAuthProvider.credential(
         verificationId: verificationId, smsCode: smsCode);
 
     // Sign the user in (or link) with the credential
     await _auth.signInWithCredential(credential).then((value) async {
-      onVerifyOtp();
       var d = await _firebaseFirestore
           .collection("Riders")
-          .doc(_auth.currentUser!.uid).get();
-      if(d.exists){
-        if(d['verified'] == true) {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => BottomNavBar()));
-        }else{
+          .doc(_auth.currentUser!.uid)
+          .get();
+      if (d.exists) {
+        if (d['verified'] == true) {
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => BottomNavBar()));
+        } else {
           Navigator.push(context,
               MaterialPageRoute(builder: (context) => WaitingScreen()));
         }
-      }else{
-        Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-                builder: (context) => CreateProfileScreen()));
+      } else {
+        Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (context) => CreateProfileScreen()));
       }
     });
 
@@ -89,12 +87,14 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> getMsgToken() async {
     _token = await FirebaseMessaging.instance.getToken();
-    FirebaseFirestore.instance.collection("Riders").doc(FirebaseAuth.instance.currentUser!.uid).update({'token':_token});
+    FirebaseFirestore.instance
+        .collection("Riders")
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .update({'token': _token});
     notifyListeners();
   }
 
   Future<void> createUserProfile(Map<String, dynamic> mapData) async {
-
     await _firebaseFirestore
         .collection("Riders")
         .where("riderId", isEqualTo: _auth.currentUser!.uid)
@@ -132,7 +132,4 @@ class AuthProvider extends ChangeNotifier {
 
     notifyListeners();
   }
-
-
-
 }

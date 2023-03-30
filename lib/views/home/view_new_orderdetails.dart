@@ -322,23 +322,70 @@ class NewOrderDetails extends StatelessWidget {
                                   );
                                 })),
                         (o['deliveryPerson'] ==
-                                    FirebaseAuth.instance.currentUser!.uid &&
-                                o['status'] == "accepted")
+                                        FirebaseAuth
+                                            .instance.currentUser!.uid &&
+                                    o['status'] == "accepted") ||
+                                (o['deliveryPerson'] ==
+                                        FirebaseAuth
+                                            .instance.currentUser!.uid &&
+                                    o['status'] == "picked")
                             ? Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
                                 children: [
+                                  o['status'] == "picked"
+                                      ? Container(
+                                          height: height(context) * 0.05,
+                                          width: width(context) * 0.3,
+                                          decoration: myFillBoxDecoration(
+                                              0,
+                                              Color.fromRGBO(47, 168, 78, 1),
+                                              6),
+                                          child: Center(
+                                            child: Text(
+                                              'Collected',
+                                              style:
+                                                  bodyText14w600(color: white),
+                                            ),
+                                          ),
+                                        )
+                                      : InkWell(
+                                          onTap: () {
+                                            sp.collectOrder(docId);
+                                          },
+                                          child: Container(
+                                            height: height(context) * 0.05,
+                                            width: width(context) * 0.3,
+                                            decoration: myFillBoxDecoration(
+                                                0,
+                                                Color.fromRGBO(47, 168, 78, 1),
+                                                6),
+                                            child: Center(
+                                              child: Text(
+                                                'Collect Order',
+                                                style: bodyText14w600(
+                                                    color: white),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
                                   InkWell(
-                                    onTap: () {
-                                      sp.collectOrder(docId);
-                                    },
+                                    onTap: (o['deliveryPerson'] ==
+                                                FirebaseAuth.instance
+                                                    .currentUser!.uid &&
+                                            o['status'] == "picked")
+                                        ? () {
+                                            sp.completeOrder(docId);
+                                          }
+                                        : null,
                                     child: Container(
                                       height: height(context) * 0.05,
-                                      width: width(context) * 0.53,
+                                      width: width(context) * 0.3,
                                       decoration: myFillBoxDecoration(
                                           0, Color.fromRGBO(47, 168, 78, 1), 6),
                                       child: Center(
                                         child: Text(
-                                          'Collect Order',
+                                          'Complete Order',
                                           style: bodyText14w600(color: white),
                                         ),
                                       ),
@@ -346,16 +393,89 @@ class NewOrderDetails extends StatelessWidget {
                                   ),
                                 ],
                               )
+                            // : (o['deliveryPerson'] ==
+                            //             FirebaseAuth
+                            //                 .instance.currentUser!.uid &&
+                            //         o['status'] == "picked")
+                            //     ? Row(
+                            //         mainAxisAlignment: MainAxisAlignment.center,
+                            //         children: [
+                            //           InkWell(
+                            //             onTap: () {
+                            //               sp.completeOrder(docId);
+                            //             },
+                            //             child: Container(
+                            //               height: height(context) * 0.05,
+                            //               width: width(context) * 0.53,
+                            //               decoration: myFillBoxDecoration(
+                            //                   0,
+                            //                   Color.fromRGBO(47, 168, 78, 1),
+                            //                   6),
+                            //               child: Center(
+                            //                 child: Text(
+                            //                   'Complete Order',
+                            //                   style:
+                            //                       bodyText14w600(color: white),
+                            //                 ),
+                            //               ),
+                            //             ),
+                            //           ),
+                            //         ],
+                            //       )
                             : (o['deliveryPerson'] ==
                                         FirebaseAuth
                                             .instance.currentUser!.uid &&
-                                    o['status'] == "picked")
+                                    o['status'] == "completed")
                                 ? Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       InkWell(
+                                        onTap: () {},
+                                        child: Container(
+                                          height: height(context) * 0.05,
+                                          width: width(context) * 0.53,
+                                          decoration: myFillBoxDecoration(
+                                              0,
+                                              Color.fromRGBO(47, 168, 78, 1),
+                                              6),
+                                          child: Center(
+                                            child: Text(
+                                              'Completed',
+                                              style:
+                                                  bodyText14w600(color: white),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      InkWell(
                                         onTap: () {
-                                          sp.completeOrder(docId);
+                                          sp.rejectOrder(docId);
+                                          Navigator.pop(context);
+                                          sp.fetchNewOrder();
+                                        },
+                                        child: Container(
+                                          height: height(context) * 0.05,
+                                          width: width(context) * 0.3,
+                                          decoration: myOutlineBoxDecoration(
+                                              1, primary, 6),
+                                          child: Center(
+                                            child: Text(
+                                              'Reject',
+                                              style: bodyText14w600(
+                                                  color: primary),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      InkWell(
+                                        onTap: () {
+                                          sp.acceptOrder(docId);
                                         },
                                         child: Container(
                                           height: height(context) * 0.05,
@@ -366,90 +486,15 @@ class NewOrderDetails extends StatelessWidget {
                                               6),
                                           child: Center(
                                             child: Text(
-                                              'Complete Order',
+                                              'Pick Order',
                                               style:
                                                   bodyText14w600(color: white),
                                             ),
                                           ),
                                         ),
-                                      ),
+                                      )
                                     ],
-                                  )
-                                : (o['deliveryPerson'] ==
-                                            FirebaseAuth
-                                                .instance.currentUser!.uid &&
-                                        o['status'] == "completed")
-                                    ? Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        InkWell(
-                                            onTap: () {},
-                                            child: Container(
-                                              height: height(context) * 0.05,
-                                              width: width(context) * 0.53,
-                                              decoration: myFillBoxDecoration(
-                                                  0,
-                                                  Color.fromRGBO(47, 168, 78, 1),
-                                                  6),
-                                              child: Center(
-                                                child: Text(
-                                                  'Completed',
-                                                  style:
-                                                      bodyText14w600(color: white),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    )
-                                    : Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceEvenly,
-                                        children: [
-                                          InkWell(
-                                            onTap: () {
-                                              sp.rejectOrder(docId);
-                                              Navigator.pop(context);
-                                              sp.fetchNewOrder();
-                                            },
-                                            child: Container(
-                                              height: height(context) * 0.05,
-                                              width: width(context) * 0.3,
-                                              decoration:
-                                                  myOutlineBoxDecoration(
-                                                      1, primary, 6),
-                                              child: Center(
-                                                child: Text(
-                                                  'Reject',
-                                                  style: bodyText14w600(
-                                                      color: primary),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          InkWell(
-                                            onTap: () {
-                                              sp.acceptOrder(docId);
-                                            },
-                                            child: Container(
-                                              height: height(context) * 0.05,
-                                              width: width(context) * 0.53,
-                                              decoration: myFillBoxDecoration(
-                                                  0,
-                                                  Color.fromRGBO(
-                                                      47, 168, 78, 1),
-                                                  6),
-                                              child: Center(
-                                                child: Text(
-                                                  'Pick Order',
-                                                  style: bodyText14w600(
-                                                      color: white),
-                                                ),
-                                              ),
-                                            ),
-                                          )
-                                        ],
-                                      ),
+                                  ),
                       ],
                     ),
                   ),

@@ -16,9 +16,14 @@ enum orderFilter {
   last1month,
 }
 
-class WalletScreen extends StatelessWidget {
+class WalletScreen extends StatefulWidget {
   WalletScreen({super.key});
 
+  @override
+  State<WalletScreen> createState() => _WalletScreenState();
+}
+
+class _WalletScreenState extends State<WalletScreen> {
   List orderStatus = [
     {'status': 'Processing', 'color': Colors.orange},
     {'status': 'Recieved', 'color': Colors.green},
@@ -27,7 +32,14 @@ class WalletScreen extends StatelessWidget {
     {'status': 'Recieved', 'color': Colors.green},
     {'status': 'Recieved', 'color': Colors.green}
   ];
+
+  Stream stream = FirebaseFirestore.instance.collection("riderPayments")
+      .where("riderId",isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+      .where('updated',isGreaterThanOrEqualTo: DateTime(DateTime.now().year,DateTime.now().month,DateTime.now().day))
+      .snapshots();
+
   orderFilter _value = orderFilter.today;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -114,7 +126,108 @@ class WalletScreen extends StatelessWidget {
                   Spacer(),
                   InkWell(
                     onTap: () {
-                      showFiltersOrders(context);
+                      showModalBottomSheet(
+                        context: context,
+
+                        backgroundColor: Colors.white,
+                        //elevates modal bottom screen
+                        elevation: 10,
+
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        builder: (BuildContext context) {
+
+                            return Container(
+                                padding: EdgeInsets.all(12),
+                                height: height(context) * 0.55,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          'Filters Income',
+                                          style: bodyText16w600(color: black),
+                                        ),
+                                        IconButton(
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                            },
+                                            icon: Icon(Icons.close))
+                                      ],
+                                    ),
+                                    RadioListTile(
+                                        value: orderFilter.all,
+                                        activeColor: primary,
+                                        title: Text('Total earning'),
+                                        groupValue: _value,
+                                        onChanged: (newValue) {
+                                          setState(() {
+                                            _value = newValue as orderFilter;
+                                            stream =    FirebaseFirestore.instance.collection("riderPayments")
+                                                .where("riderId",isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+                                                .snapshots();
+                                          });
+                                          Navigator.pop(context);
+                                        }),
+                                    RadioListTile(
+                                        value: orderFilter.today,
+                                        activeColor: primary,
+                                        title: Text('Today earning'),
+                                        groupValue: _value,
+                                        onChanged: (newValue) {
+                                          setState(() {
+                                            _value = newValue as orderFilter;
+                                            stream =     FirebaseFirestore.instance.collection("riderPayments")
+                                                .where("riderId",isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+                                                .where('updated',isGreaterThanOrEqualTo: DateTime(DateTime.now().year,DateTime.now().month,DateTime.now().day))
+                                                .snapshots();
+                                          });
+                                          Navigator.pop(context);
+                                        }),
+                                    RadioListTile(
+                                        value: orderFilter.last15days,
+                                        activeColor: primary,
+                                        title: Text('Last 15 days earning'),
+                                        groupValue: _value,
+                                        onChanged: (newValue) {
+                                          setState(() {
+                                            _value = newValue as orderFilter;
+                                            stream =    FirebaseFirestore.instance.collection("riderPayments")
+                                                .where("riderId",isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+                                                .where('updated',isGreaterThanOrEqualTo: DateTime(DateTime.now().year,DateTime.now().month,DateTime.now().day).subtract(Duration(days: 15)))
+                                                .snapshots();
+                                          });
+                                          Navigator.pop(context);
+                                        }),
+                                    RadioListTile(
+                                        value: orderFilter.last1month,
+                                        activeColor: primary,
+                                        title: Text('Last 1 month earning'),
+                                        groupValue: _value,
+                                        onChanged: (newValue) {
+                                          setState(() {
+                                            _value = newValue as orderFilter;
+                                            stream =   FirebaseFirestore.instance.collection("riderPayments")
+                                                .where("riderId",isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+                                                .where('updated',isGreaterThanOrEqualTo: DateTime(DateTime.now().year,DateTime.now().month,DateTime.now().day).subtract(Duration(days: 30)))
+                                                .snapshots();
+                                          });
+                                          Navigator.pop(context);
+                                        }),
+                                    addVerticalSpace(20),
+                                    CustomButton(buttonName: 'Apply', onClick: () {
+                                      Navigator.pop(context);
+                                    })
+                                  ],
+                                ));
+
+                        },
+                      );
+                      setState((){});
+                      print(stream);
                     },
                     child: Row(
                       children: [
@@ -135,10 +248,10 @@ class WalletScreen extends StatelessWidget {
             SizedBox(
               height: height(context) * 0.7,
               child: StreamBuilder(
-                stream: FirebaseFirestore.instance.collection("riderPayments").where("riderId",isEqualTo: FirebaseAuth.instance.currentUser!.uid).snapshots(),
+                stream: stream,
                 builder: (context,AsyncSnapshot snapshot) {
                   if(!snapshot.hasData){
-                    return Center(child: CircularProgressIndicator());
+                    return const Center(child: CircularProgressIndicator());
                   }
                   return ListView.builder(
                       physics: BouncingScrollPhysics(),
@@ -290,6 +403,9 @@ class WalletScreen extends StatelessWidget {
                       onChanged: (newValue) {
                         setState(() {
                           _value = newValue as orderFilter;
+                       stream =    FirebaseFirestore.instance.collection("riderPayments")
+                              .where("riderId",isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+                              .snapshots();
                         });
                       }),
                   RadioListTile(
@@ -300,6 +416,10 @@ class WalletScreen extends StatelessWidget {
                       onChanged: (newValue) {
                         setState(() {
                           _value = newValue as orderFilter;
+                      stream =     FirebaseFirestore.instance.collection("riderPayments")
+                              .where("riderId",isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+                              .where('updated',isGreaterThanOrEqualTo: DateTime(DateTime.now().year,DateTime.now().month,DateTime.now().day))
+                              .snapshots();
                         });
                       }),
                   RadioListTile(
@@ -310,6 +430,10 @@ class WalletScreen extends StatelessWidget {
                       onChanged: (newValue) {
                         setState(() {
                           _value = newValue as orderFilter;
+                       stream =    FirebaseFirestore.instance.collection("riderPayments")
+                              .where("riderId",isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+                              .where('updated',isGreaterThanOrEqualTo: DateTime(DateTime.now().year,DateTime.now().month,DateTime.now().day).subtract(Duration(days: 15)))
+                              .snapshots();
                         });
                       }),
                   RadioListTile(
@@ -320,6 +444,10 @@ class WalletScreen extends StatelessWidget {
                       onChanged: (newValue) {
                         setState(() {
                           _value = newValue as orderFilter;
+                        stream =   FirebaseFirestore.instance.collection("riderPayments")
+                              .where("riderId",isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+                              .where('updated',isGreaterThanOrEqualTo: DateTime(DateTime.now().year,DateTime.now().month,DateTime.now().day).subtract(Duration(days: 30)))
+                              .snapshots();
                         });
                       }),
                   addVerticalSpace(20),

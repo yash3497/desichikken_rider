@@ -128,7 +128,7 @@ class _MyAppState extends State<MyApp> {
             create: (_) => ServiceProvider())
       ],
       child: MaterialApp(
-          title: 'Amaze Delivery',
+          title: 'Desichikken Delivery',
           theme: ThemeData(
             primarySwatch: Colors.blue,
           ),

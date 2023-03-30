@@ -95,7 +95,7 @@ class OrdersDetails extends StatelessWidget {
                                     ),
                                     Spacer(),
                                     Text(
-                                      DateTime.fromMillisecondsSinceEpoch(o['createdAt']).toString().split(" ").first,
+                                      (o['createdAt'].toDate()).toString().split(" ").first,
                                       style: bodytext12Bold(color: black),
                                     )
                                   ],
